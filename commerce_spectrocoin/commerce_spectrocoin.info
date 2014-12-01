@@ -1,0 +1,8 @@
+name = Commerce SpectroCoin
+description = Implements SpectroCoin payment gateway in Drupal Commerce checkout.
+package = Commerce (contrib)
+configure = admin/commerce/config/payment-methods/manage/commerce_payment_spectrocoin
+dependencies[] = commerce
+dependencies[] = commerce_payment
+core = 7.x
+

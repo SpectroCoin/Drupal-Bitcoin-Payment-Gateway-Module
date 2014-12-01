@@ -1,0 +1,369 @@
+<?php
+
+define('SC_API_URL', 'https://spectrocoin.com/api/merchant/1');
+
+
+/**
+ * Implements hook_menu().
+ */
+function commerce_spectrocoin_menu() {
+  $items['spectrocoin/ipn/%commerce_order/%commerce_payment_transaction/%commerce_payment_method_instance'] = array(
+    'title' => 'spectrocoin IPN',
+    'page callback' => 'commerce_spectrocoin_process_ipn',
+    'page arguments' => array(2, 3, 4),
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+  );
+
+  return $items;
+}
+
+/**
+ * Implements hook_commerce_payment_method_info().
+ */
+function commerce_spectrocoin_commerce_payment_method_info() {
+  $payment_methods = array();
+
+  $payment_methods['spectrocoin'] = array(
+    'base' => 'commerce_spectrocoin',
+    'title' => t('Bitcoin provided by SpectroCoin'),
+    'description' => t('SpectroCoin Gateway'),
+    'terminal' => FALSE,
+    'offsite' => TRUE,
+    'offsite_autoredirect' => FALSE,
+  );
+
+  return $payment_methods;
+}
+
+/**
+ * Returns an array of all possible currency codes for the SpectroCoin payment method.
+ *
+ * @return
+ *   An associative array of currency codes with keys and values being the
+ *   currency codes accepted by the SpectroCoin payment method.
+ */
+function commerce_spectrocoin_currencies() {
+  return drupal_map_assoc(array('EUR', 'BTC'));
+}
+
+/**
+ * Returns the default settings for the SpectroCoin payment method.
+ */
+function commerce_spectrocoin_default_settings() {
+  $default_currency = commerce_default_currency();
+
+  return array(
+    'checkout_display' => 'both',
+    'merchantId' => '',
+    'apiId' => '',
+    'currency_code' => in_array($default_currency, array_keys(commerce_spectrocoin_currencies())) ? $default_currency : 'EUR',
+    'culture' => 'en',
+    'private_key' => '',
+  );
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function commerce_spectrocoin_form_commerce_checkout_form_alter(&$form, &$form_state) {
+  // If this checkout form contains the payment method radios.
+  if (!empty($form['commerce_payment']['payment_method']['#options'])) {
+    // Loop over its options array looking for a SpectroCoin option.
+    foreach ($form['commerce_payment']['payment_method']['#options'] as $key => &$value) {
+      list($method_id, $rule_name) = explode('|', $key);
+
+      switch ($method_id) {
+        case 'spectrocoin':
+          // Prepare the replacement radio button text with icons.
+          $variables = array(
+            'path' => drupal_get_path('module', 'commerce_spectrocoin') . '/images/bitcoin.png',
+            'title' => t('Bitcoin provided by SpectroCoin'),
+            'alt' => t('Bitcoin logo'),
+            'attributes' => array(
+              'class' => array('commerce-spectrocoin-icon'),
+            ),
+          );
+          $icons['bitcoin'] = theme('image', $variables);
+
+          $payment_method = commerce_payment_method_instance_load($key);
+
+          if (isset($payment_method['settings']['checkout_display'])) {
+            $value = '';
+            if (in_array($payment_method['settings']['checkout_display'], array('both', 'text'))) {
+              $value .= t('Bitcoin provided by SpectroCoin');
+            }
+            if (in_array($payment_method['settings']['checkout_display'], array('both', 'icon'))) {
+              $value .= '<span class="commerce-spectrocoin-icons">' . implode(' ', $icons) . '</span>';
+            }
+          }
+
+          // Add the CSS to place the icon after the radio button text.
+          $form['commerce_payment']['payment_method']['#attached']['css'][] = drupal_get_path('module', 'commerce_spectrocoin') . '/theme/commerce_spectrocoin.theme.css';
+
+          break;
+      }
+    }
+  }
+}
+
+/**
+ * Payment method callback: settings form.
+ */
+function commerce_spectrocoin_settings_form($settings = array()) {
+  $form = array();
+
+  // Merge default settings into the stored settings array.
+  $settings = (array) $settings + commerce_spectrocoin_default_settings();
+
+  $form['checkout_display'] = array(
+    '#type' => 'radios',
+    '#title' => t('Payment display'),
+    '#options' => array(
+      'text' => t('Bitcoin text only'),
+      'icon' => t('Bitcoin icon only'),
+      'both' => t('Both text and icon'),
+    ),
+    '#default_value' => $settings['checkout_display'],
+    '#description' => t('When selecting a payment option, select the indicator next to the radio buttons for payment options.'),
+  );
+
+  $form['merchantId'] = array(
+    '#type' => 'textfield',
+    '#default_value' => $settings['merchantId'],
+    '#title' => t('Merchant Id'),
+    '#size' => 45,
+    '#maxlength' => 130,
+    '#required' => TRUE,
+  );
+
+  $form['apiId'] = array(
+    '#type' => 'textfield',
+    '#default_value' => $settings['apiId'],
+    '#title' => t('Project Id'),
+    '#size' => 45,
+    '#maxlength' => 130,
+    '#required' => TRUE,
+  );
+
+  $form['currency_code'] = array(
+    '#type' => 'select',
+    '#title' => t('Transaction currency'),
+    '#description' => t('Transactions in other currencies will be converted to this currency, so multi-currency sites must be configured to use appropriate conversion rates.'),
+    '#options' => commerce_spectrocoin_currencies(),
+    '#default_value' => $settings['currency_code'],
+  );
+
+  $form['culture'] = array(
+    '#type' => 'select',
+    '#default_value' => $settings['culture'],
+    '#title' => t('Language for response'),
+    '#options' => array('en', 'lt', 'ru', 'de'),
+    '#required' => TRUE,
+  );
+
+  $is_private_key_set = !empty($settings['private_key']);
+
+  $form['private_key'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Private key'),
+    '#default_value' => '',
+    '#required' => !$is_private_key_set,
+    '#attributes' => array(
+      'placeholder' => t('If you have already entered your private key before, you should leave this field blank, unless you want to change the stored private key.'),
+    ),
+    '#element_validate' => array('commerce_spectrocoin_settings_form_private_key_validate'),
+  );
+
+  $form['private_key_old'] = array(
+    '#type' => 'value',
+    '#value' => $settings['private_key'],
+  );
+
+  return $form;
+}
+
+/**
+* A little hack. When form is presentend, the private key is not shown .
+* So, if user submits the form without changing the private key, we must prevent it from being reset.
+*/
+function commerce_spectrocoin_settings_form_private_key_validate($element, &$form_state, $form) {
+  if (empty($element['#value'])) {
+    form_set_value($element, $form_state['values']['parameter']['payment_method']['settings']['payment_method']['settings']['private_key_old'], $form_state);
+  }
+  unset($form_state['values']['parameter']['payment_method']['settings']['payment_method']['settings']['private_key_old']);
+}
+
+/**
+ * Creates a payment transaction for the specified charge amount.
+ *
+ * @param array $payment_method
+ *   The payment method instance object used to charge this payment.
+ * @param object $order
+ *   The order object the payment applies to.
+ * @param array $charge
+ *   An array indicating the amount and currency code to charge.
+ */
+function commerce_spectrocoin_transaction($payment_method, $order, $charge) {
+  $transaction = commerce_payment_transaction_new('spectrocoin', $order->order_id);
+  // Expected value: spectrocoin|commerce_payment_spectrocoin.
+  $transaction->instance_id = $payment_method['instance_id'];
+  $transaction->remote_id = 'Default';
+  $transaction->amount = $charge['amount'];
+  $transaction->currency_code = $charge['currency_code'];
+  $transaction->status = COMMERCE_PAYMENT_STATUS_PENDING;
+  $transaction->message = 'Initialized transaction';
+  $transaction->message_variables = array();
+
+  commerce_payment_transaction_save($transaction);
+  return $transaction;
+}
+
+/**
+ * Payment method callback: redirect form
+ */
+function commerce_spectrocoin_redirect_form($form, &$form_state, $order, $payment_method) {
+  $settings = $payment_method['settings'];
+
+  // Return an error if the enabling action's settings haven't been configured.
+  if (empty($settings['merchantId']) || empty($settings['apiId']) || empty($settings['private_key'])) {
+    drupal_set_message(t('SpectroCoin is not configured for use.'), 'error');
+    return array();
+  }
+
+  $currency_code = $settings['currency_code'];
+
+  $wrapper = entity_metadata_wrapper('commerce_order', $order);
+
+  $amount = $wrapper->commerce_order_total->amount->value();
+  $order_currency_code = $wrapper->commerce_order_total->currency_code->value();
+
+  $transaction_info = db_select('commerce_payment_transaction', 'cpt')
+    ->fields('cpt', array('transaction_id'))
+    ->condition('cpt.payment_method', 'spectrocoin')
+    ->condition('cpt.order_id', $order->order_id)
+    ->range(0, 1)
+    ->addTag('commerce_spectrocoin_redirect_transaction')
+    ->execute()
+    ->fetchAssoc();
+  if ($transaction_info && is_array($transaction_info)) {
+    // load previous transaction
+    $transaction = commerce_payment_transaction_load($transaction_info['transaction_id']);
+  }
+  else {
+    // create new transaction
+    $transaction = commerce_spectrocoin_transaction($payment_method, $order, $wrapper->commerce_order_total->value());
+  }
+
+  module_load_include('php', 'commerce_spectrocoin', 'SCMerchantClient/SCMerchantClient');
+  $scMerchantClient = new SCMerchantClient(
+    SC_API_URL,
+    $settings['merchantId'],
+    $settings['apiId'],
+    $settings['private_key']
+  );
+
+  $receiveAmount = commerce_currency_amount_to_decimal(commerce_currency_convert($amount, $order_currency_code, $currency_code), $currency_code);
+
+  $createOrderRequest = new CreateOrderRequest(
+    NULL,
+    NULL,
+    $receiveAmount,
+    t('Order @order_number at @store', array('@order_number' => $order->order_number, '@store' => variable_get('site_name', url('<front>', array('absolute' => TRUE))))),
+    $settings['culture'],
+    url('spectrocoin/ipn/'.$order->order_id.'/'.$transaction->transaction_id.'/'.$payment_method['instance_id'], array('absolute' => TRUE)),
+    url('checkout/' . $order->order_id . '/payment/return/' . $order->data['payment_redirect_key'], array('absolute' => TRUE)),
+    url('checkout/' . $order->order_id . '/payment/back/' . $order->data['payment_redirect_key'], array('absolute' => TRUE))
+  );
+
+  $createOrderResponse = $scMerchantClient->createOrder($createOrderRequest);
+
+  if ($createOrderResponse instanceof ApiError) {
+    drupal_set_message(t('Error occurred. %code: %message', array('%code' => $createOrderResponse->getCode(), '%message' => $createOrderResponse->getMessage())), 'error');
+  } else if ($createOrderResponse instanceof CreateOrderResponse) {
+    if($currency_code != $createOrderResponse->getReceiveCurrency()){
+      drupal_set_message(t('Error occurred. %message', array('%message' => t('Pay and receive currency mismatch.'))), 'error');
+    }else{
+      $transaction->remote_id = $createOrderResponse->getOrderRequestId();
+      $transaction->message = $createOrderResponse->getRedirectUrl();
+      commerce_payment_transaction_save($transaction);
+      drupal_goto($createOrderResponse->getRedirectUrl());
+    }
+  }
+
+  return $form;
+}
+
+/**
+ * Processes an incoming IPN.
+ *
+ * @param $order
+ *   The order object that originally made the payment.
+ * @param $payment_method
+ *   The payment method instance array that originally made the payment.
+ *
+ */
+function commerce_spectrocoin_process_ipn($order, $transaction, $payment_method) {
+  // Retrieve the IPN from $_POST
+  // Note that Drupal has already run stripslashes() on the contents of the
+  // $_POST array at this point, so we don't need to worry about them.
+  // $ipn = $_POST;
+  $ipn = $_REQUEST;
+
+  // Exit now if the $_POST was empty.
+  if (empty($ipn)) {
+    watchdog('commerce_spectrocoin', 'IPN URL accessed with no POST data submitted.', array(), WATCHDOG_WARNING);
+    echo 'Invalid request!'; return;
+  }
+
+  module_load_include('php', 'commerce_spectrocoin', 'SCMerchantClient/SCMerchantClient');
+
+  $scMerchantClient = new SCMerchantClient(
+    SC_API_URL,
+    $payment_method['settings']['merchantId'],
+    $payment_method['settings']['apiId'],
+    $payment_method['settings']['private_key']
+  );
+
+  $callback = $scMerchantClient->parseCreateOrderCallback($ipn);
+
+  if ($callback != null && $scMerchantClient->validateCreateOrderCallback($callback)){
+
+    switch ($callback->getStatus()) {
+      case OrderStatusEnum::$New:
+      case OrderStatusEnum::$Pending:
+        commerce_checkout_complete($order);
+        $transaction->status = COMMERCE_PAYMENT_STATUS_PENDING;
+        $transaction->message = t("Waiting for payment.");
+        break;
+      case OrderStatusEnum::$Expired:
+      case OrderStatusEnum::$Failed:
+        $transaction->status = COMMERCE_PAYMENT_STATUS_FAILURE;
+        $transaction->message = t('Payment was not received.');
+        break;
+      case OrderStatusEnum::$Test:
+      case OrderStatusEnum::$Paid:
+        commerce_checkout_complete($order);
+        $transaction->status = COMMERCE_PAYMENT_STATUS_SUCCESS;
+        $transaction->message = t('Payment confirmed.');
+        break;
+      default:
+        echo 'Unknown order status: '.$callback->getStatus();
+        break;
+    }
+
+    $transaction->amount = commerce_currency_decimal_to_amount($ipn['receivedAmount'], $ipn['receiveCurrency']);
+    $transaction->currency_code = $ipn['receiveCurrency'];
+
+    $transaction->remote_status = $callback->getStatus();
+    $transaction->payload = $ipn;
+
+    commerce_payment_transaction_save($transaction);
+
+    echo '*ok*';
+  } else {
+    echo 'Invalid callback!';
+  }
+
+}
+
