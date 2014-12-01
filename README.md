@@ -3,18 +3,18 @@ Commerce SpectroCoin
 
 This module integrates [SpectroCoin](https://spectrocoin.com/) Payments with [Drupal Commerce](https://drupal.org/project/commerce) to accept [Bitcoin](https://bitcoin.org) payments.
 
-** INSTALLATION **
+**INSTALLATION**
 
 1. Download the module to sites/all/modules or sites/all/modules/contrib.
 2. Install/Enable the module at admin/modules page.
 
-** CONFIGURATION **
+**CONFIGURATION**
 
 Configure SpectroCoin options in admin/commerce/config/payment-methods
 by editing the SpectroCoin payment method. The configuration
 options are part of the reaction rule settings.
 
-** CURRENCY CONVERSION **
+**CURRENCY CONVERSION**
 
 SpectroCoin only supports EUR, BTC payments.
 
