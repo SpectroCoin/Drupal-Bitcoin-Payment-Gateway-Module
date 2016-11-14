@@ -1,7 +1,7 @@
 SpectroCoin Bitcoin Payment Extension
 ---------------
 
-This merchant module integrates [SpectroCoin](https://spectrocoin.com/) Payments with [Drupal Commerce](https://drupal.org/project/commerce) to accept [Bitcoin](https://bitcoin.org) payments.
+This is [SpectroCoin](https://spectrocoin.com/) Bitcoin Payment Module for Drupal. This extenstion allows to easily accept bitcoins at your Drupal website. You can find a [tutorial](https://www.youtube.com/watch?v=Itb3-x4JurU) how to install this extenstion. You can also view video tutorial how to integrate bitcoin payments for Drupal.
 
 **INSTALLATION**
 
