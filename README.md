@@ -7,7 +7,7 @@ To succesfully use this plugin, you have to have a SpectroCoin Bitcoin wallet. Y
 
 **INSTALLATION**
 
-1. Download the module to sites/all/modules or sites/all/modules.
+1. Download the module to sites/all/modules.
 2. Install/Enable the module at the admin/modules page.
 3. Generate private and public keys
 	1. Automatically<br />
