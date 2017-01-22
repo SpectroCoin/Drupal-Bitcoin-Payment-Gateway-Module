@@ -36,7 +36,7 @@ To succesfully use this plugin, you have to have a SpectroCoin Bitcoin wallet. Y
 **CONFIGURATION**
 
 1. Configure SpectroCoin options in Home/Administration/Store/Configuration/Payment methods.
-2. Enter your Merchant Id, Application Id and Private key (Options are part of the reaction rule settings.)
+2. Enter your Merchant ID, Project ID and Private key (Options are part of the reaction rule settings.)
 
 **INFORMATION** 
 
