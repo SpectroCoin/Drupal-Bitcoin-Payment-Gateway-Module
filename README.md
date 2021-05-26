@@ -7,7 +7,7 @@ To succesfully use this plugin, you have to have a SpectroCoin Bitcoin wallet. Y
 
 **INSTALLATION**
 
-1. Download the module to sites/all/modules.<br />
+1. Download the module to `sites/all/modules/commerce_spectrocoin`.<br />
 	OR <br />
   Navigate to Drupal directory and run: <br />
       <br />
