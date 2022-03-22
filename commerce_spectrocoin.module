@@ -53,8 +53,8 @@ function commerce_spectrocoin_default_settings() {
 
   return array(
     'checkout_display' => 'both',
-    'merchantId' => '',
-    'apiId' => '',
+    'userId' => '',
+    'merchantApiId' => '',
     'culture' => 'en',
     'private_key' => '',
   );
@@ -125,18 +125,18 @@ function commerce_spectrocoin_settings_form($settings = array()) {
     '#description' => t('When selecting a payment option, select the indicator next to the radio buttons for payment options.'),
   );
 
-  $form['merchantId'] = array(
+  $form['userId'] = array(
     '#type' => 'textfield',
-    '#default_value' => $settings['merchantId'],
+    '#default_value' => $settings['userId'],
     '#title' => t('Merchant Id'),
     '#size' => 45,
     '#maxlength' => 130,
     '#required' => TRUE,
   );
 
-  $form['apiId'] = array(
+  $form['merchantApiId'] = array(
     '#type' => 'textfield',
-    '#default_value' => $settings['apiId'],
+    '#default_value' => $settings['merchantApiId'],
     '#title' => t('Project Id'),
     '#size' => 45,
     '#maxlength' => 130,
@@ -215,7 +215,7 @@ function commerce_spectrocoin_redirect_form($form, &$form_state, $order, $paymen
   $settings = $payment_method['settings'];
 
   // Return an error if the enabling action's settings haven't been configured.
-  if (empty($settings['merchantId']) || empty($settings['apiId']) || empty($settings['private_key'])) {
+  if (empty($settings['userId']) || empty($settings['merchantApiId']) || empty($settings['private_key'])) {
     drupal_set_message(t('SpectroCoin is not configured for use.'), 'error');
     return array();
   }
@@ -244,8 +244,8 @@ function commerce_spectrocoin_redirect_form($form, &$form_state, $order, $paymen
   module_load_include('php', 'commerce_spectrocoin', 'SCMerchantClient/SCMerchantClient');
   $client = new SCMerchantClient(
     SC_API_URL,
-    $settings['merchantId'],
-    $settings['apiId']
+    $settings['userId'],
+    $settings['merchantApiId']
   );
   $client->setPrivateMerchantKey($privateKey);
   $orderDescription = $order->order_id;
@@ -298,8 +298,8 @@ function commerce_spectrocoin_process_ipn($order, $transaction, $payment_method)
 
   $client = new SCMerchantClient(
     SC_API_URL,
-    $payment_method['settings']['merchantId'],
-    $payment_method['settings']['apiId']
+    $payment_method['settings']['userId'],
+    $payment_method['settings']['merchantApiId']
   );
   if (empty($ipn)) {
     watchdog('commerce_spectrocoin', 'IPN URL accessed with no POST data submitted.', array(), WATCHDOG_WARNING);
