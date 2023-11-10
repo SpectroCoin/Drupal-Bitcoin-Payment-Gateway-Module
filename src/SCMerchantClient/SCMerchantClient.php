@@ -74,9 +74,9 @@ class SCMerchantClient
             'receiveAmount' => $request->getReceiveAmount(),
             'description' => $request->getDescription(),
             'culture' => $request->getCulture(),
-            'callbackUrl' => $request->getCallbackUrl(),
-            'successUrl' => $request->getSuccessUrl(),
-            'failureUrl' => $request->getFailureUrl()
+            'callbackUrl' => 'http://localhost.com',
+            'successUrl' => 'http://localhost.com',
+            'failureUrl' => 'http://localhost.com'
         );
 
         $formHandler = new \Httpful\Handlers\FormHandler();
