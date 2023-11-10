@@ -1,0 +1,10 @@
+<?php
+
+/**
+ * Implements hook_requirements().
+ */
+function commerce_spectrocoin_requirements($phase) {
+  $requirements = [];
+
+  return $requirements;
+}
