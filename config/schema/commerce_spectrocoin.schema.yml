@@ -1,0 +1,18 @@
+commerce_payment.commerce_payment_gateway.plugin.spectrocoin:
+  type: commerce_payment_gateway_configuration
+  mapping:
+    checkout_display:
+      type: string
+      label: 'Checkout Display'
+    userId:
+      type: string
+      label: 'User ID'
+    merchantApiId:
+      type: string
+      label: 'Merchant ID'
+    culture:
+      type: string
+      label: 'Culture'
+    private_key:
+      type: string
+      label: 'Private Key'
