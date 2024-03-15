@@ -1,0 +1,20 @@
+commerce_spectrocoin.callback:
+  path: "/commerce-spectrocoin/callback"
+  defaults:
+    _controller: 'Drupal\commerce_spectrocoin\Controller\SpectroCoinController::callback'
+  requirements:
+    _permission: "administer commerce_payment"
+
+commerce_spectrocoin.success:
+  path: "/commerce-spectrocoin/success"
+  defaults:
+    _controller: 'Drupal\commerce_spectrocoin\Controller\SpectroCoinController::success'
+  requirements:
+    _permission: "administer commerce_payment"
+
+commerce_spectrocoin.failure:
+  path: "/commerce-spectrocoin/failure"
+  defaults:
+    _controller: 'Drupal\commerce_spectrocoin\Controller\SpectroCoinController::failure'
+  requirements:
+    _permission: "administer commerce_payment"
