@@ -14,7 +14,6 @@ use GuzzleHttp\RequestOptions;
 
 use SCMerchantClient\data\SpectroCoin_ApiError;
 use SCMerchantClient\data\SpectroCoin_OrderCallback;
-use SCMerchantClient\data\SpectroCoin_OrderStatusEnum;
 use SCMerchantClient\messages\SpectroCoin_CreateOrderRequest;
 use SCMerchantClient\messages\SpectroCoin_CreateOrderResponse;
 use SCMerchantClient\components\SpectroCoin_Utilities;
