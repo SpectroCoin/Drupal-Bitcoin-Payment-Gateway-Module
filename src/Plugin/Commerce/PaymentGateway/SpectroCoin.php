@@ -212,7 +212,7 @@ class SpectroCoin extends OffsitePaymentGatewayBase
     $orderDescription = $payment->id();
     $currency = $paymentAmount->getCurrencyCode();
     $amount = $paymentAmount->getNumber();
-    $createOrderRequest = new CreateOrderRequest(
+    $createOrderRequest = new SpectroCoin_CreateOrderRequest(
       null,
       "BTC",
       null,
@@ -224,7 +224,7 @@ class SpectroCoin extends OffsitePaymentGatewayBase
       'https://localhost.com/success.php',
       'https://localhost.com/failure.php'
     );
-    $createOrderResponse = $client->createOrder($createOrderRequest);
+    $createOrderResponse = $client->spectroCoinCreateOrder($createOrderRequest);
 
     return $createOrderResponse;
   }
