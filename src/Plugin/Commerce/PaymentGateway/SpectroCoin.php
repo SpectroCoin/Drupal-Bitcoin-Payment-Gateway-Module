@@ -4,8 +4,6 @@ namespace Drupal\commerce_spectrocoin\Plugin\Commerce\PaymentGateway;
 use Drupal\commerce_payment\Entity\PaymentInterface;
 use Drupal\commerce_payment\Plugin\Commerce\PaymentGateway\OffsitePaymentGatewayBase;
 use Drupal\Core\Form\FormStateInterface;
-use SCMerchantClient\messages\CreateOrderRequest;
-use SCMerchantClient\SCMerchantClient;
 use Symfony\Component\HttpFoundation\Request;
 use Drupal\commerce_order\Entity\OrderInterface;
 use Drupal\commerce_payment\Exception\PaymentGatewayException;
@@ -13,11 +11,13 @@ use Drupal\Component\Datetime\TimeInterface;
 use Drupal\commerce_payment\PaymentMethodTypeManager;
 use Drupal\commerce_payment\PaymentTypeManager;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\Url;
 
-include_once(__DIR__ . '/../../../SCMerchantClient/SCMerchantClient.php');
-include_once(__DIR__ . '/../../../SCMerchantClient/messages/CreateOrderRequest.php');
-define('SC_API_URL', 'https://spectrocoin.com/api/merchant/1');
+use SCMerchantClient\messages\SpectroCoin_CreateOrderRequest;
+use SCMerchantClient\SCMerchantClient;
 
+define('API_URL', 'https://test.spectrocoin.com/api/public');
+define('AUTH_URL', 'https://test.spectrocoin.com/api/public/oauth/token');
 /**
  * Provides the QuickPay offsite Checkout payment gateway.
  *
@@ -72,10 +72,9 @@ class SpectroCoin extends OffsitePaymentGatewayBase
   {
     return [
       'checkout_display' => 'both',
-      'userId' => '',
-      'merchantApiId' => '',
-      'culture' => 'en',
-      'private_key' => '',
+      'project_id' => '',
+      'client_id' => '',
+      'client_secret' => '',
     ] + parent::defaultConfiguration();
   }
 
@@ -90,47 +89,31 @@ class SpectroCoin extends OffsitePaymentGatewayBase
   {
     $form = parent::buildConfigurationForm($form, $form_state);
 
-    $form['userId'] = array(
+    $form['project_id'] = array(
       '#type' => 'textfield',
-      '#default_value' => $this->configuration['userId'],
-      '#title' => t('Merchant Id'),
-      '#size' => 45,
-      '#maxlength' => 130,
-      '#required' => TRUE,
-    );
-
-    $form['merchantApiId'] = array(
-      '#type' => 'textfield',
-      '#default_value' => $this->configuration['merchantApiId'],
+      '#default_value' => $this->configuration['project_id'],
       '#title' => t('Project Id'),
       '#size' => 45,
       '#maxlength' => 130,
       '#required' => TRUE,
     );
 
-    $form['culture'] = array(
-      '#type' => 'select',
-      '#default_value' => $this->configuration['culture'],
-      '#title' => t('Language for response'),
-      '#options' => array('en', 'lt', 'ru', 'de'),
+    $form['client_id'] = array(
+      '#type' => 'textfield',
+      '#default_value' => $this->configuration['client_id'],
+      '#title' => t('Client Id'),
+      '#size' => 45,
+      '#maxlength' => 200,
       '#required' => TRUE,
     );
 
-    $is_private_key_set = !empty($this->configuration['private_key']);
-
-    $form['private_key'] = array(
-      '#type' => 'textarea',
-      '#title' => t('Private key'),
-      '#default_value' => '',
-      '#required' => !$is_private_key_set,
-      '#attributes' => array(
-        'placeholder' => t('If you have already entered your private key before, you should leave this field blank, unless you want to change the stored private key.'),
-      ),
-    );
-
-    $form['private_key_old'] = array(
-      '#type' => 'value',
-      '#value' => $this->configuration['private_key'],
+    $form['client_secret'] = array(
+      '#type' => 'textfield',
+      '#default_value' => $this->configuration['client_secret'],
+      '#title' => t('Client Secret'),
+      '#size' => 45,
+      '#maxlength' => 200,
+      '#required' => TRUE,
     );
 
     return $form;
@@ -161,10 +144,9 @@ class SpectroCoin extends OffsitePaymentGatewayBase
 
       parent::submitConfigurationForm($form, $form_state);
       $values = $form_state->getValue($form['#parents']);
-      $this->configuration['userId'] = $values['userId'];
+      $this->configuration['client_id'] = $values['client_id'];
       $this->configuration['merchantApiId'] = $values['merchantApiId'];
-      $this->configuration['culture'] = $values['culture'];
-      $this->configuration['private_key'] = $values['private_key'];
+      $this->configuration['client_secret'] = $values['client_secret'];
     }
   }
 
@@ -200,29 +182,33 @@ class SpectroCoin extends OffsitePaymentGatewayBase
     $configuration = $this->getConfiguration();
 
     $client = new SCMerchantClient(
-      SC_API_URL,
-      $configuration['userId'],
-      $configuration['merchantApiId']
+      AUTH_URL,
+      API_URL,
+      $configuration['project_id'],
+      $configuration['client_id'],
+      $configuration['client_secret']
     );
-
-    $privateKey = $configuration['private_key'];
-
-    $client->setPrivateMerchantKey($privateKey);
-
-    $orderDescription = $payment->id();
-    $currency = $paymentAmount->getCurrencyCode();
-    $amount = $paymentAmount->getNumber();
+    $payment_id = $payment->id();
+    $order_id = $order->id();
+    $order_description = "Payment for order {$order_id}, payment {$payment_id}";
+    $receive_amount = $paymentAmount->getNumber();
+    $receive_currency_code = $paymentAmount->getCurrencyCode();
+    $pay_currency_code = 'BTC';
+    $callback_url = Url::fromRoute('your_module.spectrocoin_callback', ['commerce_order' => $order_id, 'commerce_payment' => $payment_id], ['absolute' => TRUE])->toString();
+    $success_url = Url::fromRoute('your_module.spectrocoin_success', ['commerce_order' => $order_id], ['absolute' => TRUE])->toString();
+    $failure_url = Url::fromRoute('your_module.spectrocoin_failure', ['commerce_order' => $order_id], ['absolute' => TRUE])->toString();
+    $locale = 'en';
     $createOrderRequest = new SpectroCoin_CreateOrderRequest(
+      $order_id,
+      $order_description,
+      $receive_amount,
+      $receive_currency_code,
       null,
-      "BTC",
-      null,
-      $currency,
-      $amount,
-      $orderDescription,
-      "en",
-      'https://localhost.com/callback.php',
-      'https://localhost.com/success.php',
-      'https://localhost.com/failure.php'
+      $pay_currency_code,
+      $callback_url,
+      $success_url,
+      $failure_url,
+      $locale
     );
     $createOrderResponse = $client->spectroCoinCreateOrder($createOrderRequest);
 
