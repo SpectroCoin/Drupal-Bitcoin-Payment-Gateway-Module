@@ -71,10 +71,7 @@ class SCMerchantClient
 	{
 		$this->access_token_data = $this->spectrocoinGetAccessTokenData();
 
-		if (!$this->access_token_data) {
-			return new SpectroCoin_ApiError('AuthError', 'Failed to obtain access token');
-		}
-		else if ($this->access_token_data instanceof SpectroCoin_ApiError) {
+		if ($this->access_token_data instanceof SpectroCoin_ApiError) {
 			return $this->access_token_data;
 		}
 
@@ -146,11 +143,9 @@ class SCMerchantClient
 	 * If the key is not present in Drupal's configuration, generates a new one and stores it.
 	 */
 	private function initializeEncryptionKey() {
-        // Retrieve the existing encryption key from Drupal's configuration
         $config = \Drupal::config('your_module.settings');
         $this->encryption_key = $config->get('encryption_key');
 
-        // Generate a new key if it doesn't exist
         if (empty($this->encryption_key)) {
             $this->encryption_key = base64_encode(random_bytes(32));
             // Store the new key in Drupal's configuration

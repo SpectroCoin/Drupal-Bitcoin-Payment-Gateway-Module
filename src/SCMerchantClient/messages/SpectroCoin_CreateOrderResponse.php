@@ -2,6 +2,7 @@
 
 defined('_JEXEC') or die('Restricted access');
 
+namespace SCMerchantClient\messages;
 /**
  * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
  */

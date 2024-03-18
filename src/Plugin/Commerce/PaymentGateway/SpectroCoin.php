@@ -194,9 +194,9 @@ class SpectroCoin extends OffsitePaymentGatewayBase
     $receive_amount = $paymentAmount->getNumber();
     $receive_currency_code = $paymentAmount->getCurrencyCode();
     $pay_currency_code = 'BTC';
-    $callback_url = Url::fromRoute('your_module.spectrocoin_callback', ['commerce_order' => $order_id, 'commerce_payment' => $payment_id], ['absolute' => TRUE])->toString();
-    $success_url = Url::fromRoute('your_module.spectrocoin_success', ['commerce_order' => $order_id], ['absolute' => TRUE])->toString();
-    $failure_url = Url::fromRoute('your_module.spectrocoin_failure', ['commerce_order' => $order_id], ['absolute' => TRUE])->toString();
+    $callback_url = Url::fromRoute('spectrocoin_callback', ['commerce_order' => $order_id, 'commerce_payment' => $payment_id], ['absolute' => TRUE])->toString();
+    $success_url = Url::fromRoute('spectrocoin_success', ['commerce_order' => $order_id], ['absolute' => TRUE])->toString();
+    $failure_url = Url::fromRoute('spectrocoin_failure', ['commerce_order' => $order_id], ['absolute' => TRUE])->toString();
     $locale = 'en';
     $createOrderRequest = new SpectroCoin_CreateOrderRequest(
       $order_id,
