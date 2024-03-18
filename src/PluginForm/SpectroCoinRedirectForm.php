@@ -4,6 +4,9 @@ namespace Drupal\commerce_spectrocoin\PluginForm;
 
 use Drupal\commerce_payment\PluginForm\PaymentOffsiteForm as BasePaymentOffsiteForm;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\commerce_spectrocoin\SCMerchantClient\data\SpectroCoin_ApiError;
+use Drupal\commerce\Response\NeedsRedirectException;
+use Drupal\Core\Url;
 
 class SpectroCoinRedirectForm extends BasePaymentOffsiteForm
 {
@@ -12,60 +15,45 @@ class SpectroCoinRedirectForm extends BasePaymentOffsiteForm
    */
   public function buildConfigurationForm(array $form, FormStateInterface $form_state)
   {
-    $form = parent::buildConfigurationForm($form, $form_state);
-
-    /** @var \Drupal\commerce_payment\Entity\PaymentInterface $payment */
-    $payment = $this->entity;
-
-    /** @var \Drupal\commerce_spectrocoin\Plugin\Commerce\PaymentGateway\SpectroCoinInterface $paymentGatewayPlugin*/
-    $paymentGatewayPlugin = $payment->getPaymentGateway()->getPlugin();
-
-    $extra = [];
-
-    $spectrocoinResponse = $paymentGatewayPlugin->createSpectroCoinInvoice($payment, $extra);
-    $redirectUrl = $spectrocoinResponse->getRedirectUrl();
-    if (!isset($redirectUrl)) {
-      return [
-        '#type' => 'inline_template',
-        '#template' => "<span>{{ '" . $spectrocoinResponse . "' | t }}</span>",
-      ];
-    }
-
-    $data = [
-      'version' => 'v1',
-      'total' => $payment->getAmount()->getNumber(),
-    ];
-
-
-    $response = $this->buildRedirectForm(
-      $form,
-      $form_state,
-      $spectrocoinResponse->getRedirectUrl(),
-      $data
-    );
-
-    return $response;
+      $form = parent::buildConfigurationForm($form, $form_state);
+  
+      /** @var \Drupal\commerce_payment\Entity\PaymentInterface $payment */
+      $payment = $this->entity;
+  
+      /** @var \Drupal\commerce_spectrocoin\Plugin\Commerce\PaymentGateway\SpectroCoinInterface $paymentGatewayPlugin */
+      $paymentGatewayPlugin = $payment->getPaymentGateway()->getPlugin();
+      $extra = [];
+  
+      try {
+          $spectrocoinResponse = $paymentGatewayPlugin->createSpectroCoinInvoice($payment, $extra);
+  
+          if ($spectrocoinResponse instanceof SpectroCoin_ApiError) {
+              \Drupal::logger('commerce_spectrocoin')->error('SpectroCoin Error: Code @code, Message: @message', [
+                  '@code' => $spectrocoinResponse->getCode(),
+                  '@message' => $spectrocoinResponse->getMessage(),
+              ]);
+  
+              \Drupal::messenger()->addError(t('There was an issue processing your payment: @message', ['@message' => $spectrocoinResponse->getMessage()]));
+  
+              return $form;
+          }
+  
+          $redirectUrl = $spectrocoinResponse->getRedirectUrl();
+          if (!isset($redirectUrl)) {
+              \Drupal::messenger()->addError(t('Error: SpectroCoin response did not contain a redirect URL.'));
+              return $form;
+          }
+  
+          $data = [
+              'version' => 'v1',
+              'total' => $payment->getAmount()->getNumber(),
+          ];
+  
+          return $this->buildRedirectForm($form, $form_state, $redirectUrl, $data);
+      } catch (\Exception $e) {
+          \Drupal::logger('commerce_spectrocoin')->error('Unexpected error occurred: @message', ['@message' => $e->getMessage()]);
+          \Drupal::messenger()->addError(t('An unexpected error occurred. Please try again.'));
+          return $form;
+      }
   }
-
-  /**
-   * Redirects to a previous checkout step on error.
-   *
-   * @throws \Drupal\commerce\Response\NeedsRedirectException
-   */
-  protected function redirectToPreviousStep()
-  {
-    //    /** @var \Drupal\commerce_payment\Entity\PaymentInterface $payment */
-//    $payment = $this->entity;
-//
-//    /** @var \Drupal\commerce_order\Entity\OrderInterface $order */
-//    $order = $payment->getOrder();
-//
-//    /** @var \Drupal\commerce_checkout\Entity\CheckoutFlowInterface $checkout_flow */
-//    $checkout_flow = $order->get('checkout_flow')->entity;
-//    /** @var \Drupal\commerce_checkout\Plugin\Commerce\CheckoutFlow\CheckoutFlowWithPanesInterface $checkout_flow_plugin */
-//    $checkout_flow_plugin = $checkout_flow->getPlugin();
-//    $step_id = $checkout_flow_plugin->getPane('payment_information')->getStepId();
-//    return $checkout_flow_plugin->redirectToStep($step_id);
-  }
-
 }

@@ -6,9 +6,13 @@ use Drupal\Core\Controller\ControllerBase;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Drupal\commerce_order\Entity\OrderInterface;
-
+use Drupal\commerce_spectrocoin\SCMerchantClient\SCMerchantClient;
 
 class SpectroCoinController extends ControllerBase {
+  public function __construct() {
+    $this->scClient = new SCMerchantClient();
+  }
+
   public function callback() {
     $expected_keys = ['userId', 'merchantApiId', 'merchantId', 'apiId', 'orderId', 'payCurrency', 'payAmount', 'receiveCurrency', 'receiveAmount', 'receivedAmount', 'description', 'orderRequestId', 'status', 'sign'];
 

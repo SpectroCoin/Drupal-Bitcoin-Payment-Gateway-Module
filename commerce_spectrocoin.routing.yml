@@ -1,3 +1,5 @@
+# commerce_spectrocoin.routing.yml
+
 commerce_spectrocoin.callback:
   path: "/commerce-spectrocoin/callback"
   defaults:
