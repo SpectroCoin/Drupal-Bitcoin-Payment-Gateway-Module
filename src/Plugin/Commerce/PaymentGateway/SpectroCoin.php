@@ -13,23 +13,12 @@ use Drupal\commerce_payment\PaymentTypeManager;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Url;
 
-use SCMerchantClient\messages\SpectroCoin_CreateOrderRequest;
-use SCMerchantClient\SCMerchantClient;
+use Drupal\commerce_spectrocoin\SCMerchantClient\messages\SpectroCoin_CreateOrderRequest;
+use Drupal\commerce_spectrocoin\SCMerchantClient\SCMerchantClient;
 
 define('API_URL', 'https://test.spectrocoin.com/api/public');
 define('AUTH_URL', 'https://test.spectrocoin.com/api/public/oauth/token');
-/**
- * Provides the QuickPay offsite Checkout payment gateway.
- *
- * @CommercePaymentGateway(
- *   id = "spectrocoin",
- *   label = @Translation("SpectroCoin(Redirect to SpectroCoin)"),
- *   display_label = @Translation("SpectroCoin"),
- *    forms = {
- *     "offsite-payment" = "Drupal\commerce_spectrocoin\PluginForm\SpectroCoinRedirectForm",
- *   },
- * )
- */
+
 
 class SpectroCoin extends OffsitePaymentGatewayBase
 {
@@ -177,10 +166,7 @@ class SpectroCoin extends OffsitePaymentGatewayBase
 
     $payment->save();
 
-    module_load_include('php', 'commerce_spectrocoin', 'SCMerchantClient/SCMerchantClient');
-
     $configuration = $this->getConfiguration();
-
     $client = new SCMerchantClient(
       AUTH_URL,
       API_URL,

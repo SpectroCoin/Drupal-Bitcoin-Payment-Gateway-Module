@@ -1,19 +1,34 @@
 {
-    "name": "spectrocoin/drupal-merchant",
-       "description": "SpectroCoin cryptocurrency payment gateway for Drupal",
-    "type": "drupal-module",
-    "version": "1.0.0",
-    "keywords": [
-        "bitcoin", "btc", "xem", "dash", "spectrocoin", "merchant", "drupal", "gateway", "payment", "altcoin"
-      ],
-    "require": {
-        "composer/installers": "^1.10",
-        "guzzlehttp/guzzle": "^7.8"
-    },
-    "license": "GPL-3.0+",
-    "config": {
-        "allow-plugins": {
-            "composer/installers": true
-        }
+  "name": "spectrocoin/drupal-merchant",
+  "description": "SpectroCoin cryptocurrency payment gateway for Drupal",
+  "type": "drupal-module",
+  "version": "1.0.0",
+  "keywords": [
+    "bitcoin",
+    "btc",
+    "xem",
+    "dash",
+    "spectrocoin",
+    "merchant",
+    "drupal",
+    "gateway",
+    "payment",
+    "altcoin"
+  ],
+  "require": {
+    "composer/installers": "^1.10",
+    "guzzlehttp/guzzle": "^7.8"
+  },
+  "license": "GPL-3.0+",
+  "config": {
+    "allow-plugins": {
+      "composer/installers": true
     }
+  },
+  "autoload": {
+    "psr-4": {
+      "Drupal\\commerce_spectrocoin\\": "src/",
+      "SCMerchantClient\\": "src/SCMerchantClient/"
+    }
+  }
 }

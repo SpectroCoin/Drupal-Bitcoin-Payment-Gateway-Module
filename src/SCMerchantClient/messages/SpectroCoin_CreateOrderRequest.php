@@ -1,8 +1,8 @@
 <?php
 
-namespace SCMerchantClient\messages;
+namespace Drupal\commerce_spectrocoin\SCMerchantClient\messages;
 
-use SCMerchantClient\components\SpectroCoin_Utilities;
+use Drupal\commerce_spectrocoin\SCMerchantClient\components\SpectroCoin_Utilities;
 
 class SpectroCoin_CreateOrderRequest
 {

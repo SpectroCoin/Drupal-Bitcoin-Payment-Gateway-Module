@@ -1,6 +1,6 @@
 <?php
 
-namespace SCMerchantClient\components;
+namespace Drupal\commerce_spectrocoin\SCMerchantClient\components;
 
 class SpectroCoin_Utilities
 {

@@ -1,6 +1,6 @@
 <?php
 
-namespace SCMerchantClient\data;
+namespace Drupal\commerce_spectrocoin\SCMerchantClient\data;
 
 class SpectroCoin_ApiError
 {

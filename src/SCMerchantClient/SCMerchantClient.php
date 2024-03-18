@@ -5,18 +5,18 @@
  * This is a sample SpectroCoin Merchant v1.1 API PHP client
  */
 
-namespace SCMerchantClient;
+namespace Drupal\commerce_spectrocoin\SCMerchantClient;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\RequestOptions;
 
-use SCMerchantClient\data\SpectroCoin_ApiError;
-use SCMerchantClient\data\SpectroCoin_OrderCallback;
-use SCMerchantClient\messages\SpectroCoin_CreateOrderRequest;
-use SCMerchantClient\messages\SpectroCoin_CreateOrderResponse;
-use SCMerchantClient\components\SpectroCoin_Utilities;
+use Drupal\commerce_spectrocoin\SCMerchantClient\data\SpectroCoin_ApiError;
+use Drupal\commerce_spectrocoin\SCMerchantClient\data\SpectroCoin_OrderCallback;
+use Drupal\commerce_spectrocoin\SCMerchantClient\messages\SpectroCoin_CreateOrderRequest;
+use Drupal\commerce_spectrocoin\SCMerchantClient\messages\SpectroCoin_CreateOrderResponse;
+use Drupal\commerce_spectrocoin\SCMerchantClient\components\SpectroCoin_Utilities;
 
 require_once __DIR__ . '/../../vendor/autoload.php';
 

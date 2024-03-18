@@ -13,6 +13,10 @@ class ComposerStaticInitb30f5829c0ab71786e4d47346d18d05c
     );
 
     public static $prefixLengthsPsr4 = array (
+        'S' => 
+        array (
+            'SCMerchantClient\\' => 17,
+        ),
         'P' => 
         array (
             'Psr\\Http\\Message\\' => 17,
@@ -24,6 +28,10 @@ class ComposerStaticInitb30f5829c0ab71786e4d47346d18d05c
             'GuzzleHttp\\Promise\\' => 19,
             'GuzzleHttp\\' => 11,
         ),
+        'D' => 
+        array (
+            'Drupal\\commerce_spectrocoin\\' => 28,
+        ),
         'C' => 
         array (
             'Composer\\Installers\\' => 20,
@@ -31,10 +39,14 @@ class ComposerStaticInitb30f5829c0ab71786e4d47346d18d05c
     );
 
     public static $prefixDirsPsr4 = array (
+        'SCMerchantClient\\' => 
+        array (
+            0 => __DIR__ . '/../..' . '/src/SCMerchantClient',
+        ),
         'Psr\\Http\\Message\\' => 
         array (
-            0 => __DIR__ . '/..' . '/psr/http-message/src',
-            1 => __DIR__ . '/..' . '/psr/http-factory/src',
+            0 => __DIR__ . '/..' . '/psr/http-factory/src',
+            1 => __DIR__ . '/..' . '/psr/http-message/src',
         ),
         'Psr\\Http\\Client\\' => 
         array (
@@ -51,6 +63,10 @@ class ComposerStaticInitb30f5829c0ab71786e4d47346d18d05c
         'GuzzleHttp\\' => 
         array (
             0 => __DIR__ . '/..' . '/guzzlehttp/guzzle/src',
+        ),
+        'Drupal\\commerce_spectrocoin\\' => 
+        array (
+            0 => __DIR__ . '/../..' . '/src',
         ),
         'Composer\\Installers\\' => 
         array (
