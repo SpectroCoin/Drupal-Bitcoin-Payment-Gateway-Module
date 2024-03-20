@@ -44,6 +44,18 @@ Don't forget to change it back when migrating website to public.
 
 ### 1.0.0 MAJOR ():
 
+_Updated_: Order creation API endpoint has been updated for enhanced performance and security.
+
+_Removed_: Private key functionality and merchant ID requirement have been removed to streamline integration.
+
+_Added_: OAuth functionality introduced for authentication, requiring Client ID and Client Secret for secure API access.
+
+_Added_: API error logging and message displaying in order creation process.
+
+_Migrated_: Since HTTPful is no longer maintained, we migrated to GuzzleHttp. In this case /vendor directory was added which contains GuzzleHttp dependencies.
+
+_Reworked_: SpectroCoin callback handling was reworked. Added appropriate callback routing for success, fail and callback.
+
 ## Information
 
 This client has been developed by SpectroCoin.com If you need any further support regarding our services you can contact us via:
