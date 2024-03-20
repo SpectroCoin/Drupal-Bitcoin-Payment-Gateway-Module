@@ -29,7 +29,7 @@ class SCMerchantClient
 	private $client_id;
 	private $client_secret;
 	private $auth_url;
-	private $encryption_key;
+	private $auth_encryption_key;
 	
 	private $access_token_data;
 	private $public_spectrocoin_cert_location;
@@ -54,7 +54,7 @@ class SCMerchantClient
 		$this->client_secret = $client_secret;
 		$this->guzzle_client = new Client();
 		$this->public_spectrocoin_cert_location = "https://test.spectrocoin.com/public.pem"; //PROD:https://spectrocoin.com/files/merchant.public.pem
-		$this->encryption_key = $this->initializeEncryptionKey();
+		$this->auth_encryption_key = $this->initializeEncryptionKey();
 	}
 
 	/**
@@ -143,14 +143,13 @@ class SCMerchantClient
 	 * If the key is not present in Drupal's configuration, generates a new one and stores it.
 	 */
 	private function initializeEncryptionKey() {
-        $config = \Drupal::config('your_module.settings');
-        $this->encryption_key = $config->get('encryption_key');
+        $config = \Drupal::config('commerce_spectrocoin.settings');
+        $this->auth_encryption_key = $config->get('auth_encryption_key');
 
-        if (empty($this->encryption_key)) {
-            $this->encryption_key = base64_encode(random_bytes(32));
-            // Store the new key in Drupal's configuration
-            \Drupal::configFactory()->getEditable('your_module.settings')
-                ->set('encryption_key', $this->encryption_key)
+        if (empty($this->auth_encryption_key)) {
+            $this->auth_encryption_key = base64_encode(random_bytes(32));
+            \Drupal::configFactory()->getEditable('commerce_spectrocoin.settings')
+                ->set('auth_encryption_key', $this->auth_encryption_key)
                 ->save();
         }
     }
@@ -203,7 +202,7 @@ class SCMerchantClient
         $current_time = time();
 		$encrypted_access_token_data = $this->retrieveEncryptedData();
 		if ($encrypted_access_token_data) {
-			$decrypted_data = SpectroCoin_Utilities::spectrocoinDecryptAuthData($encrypted_access_token_data, $this->encryption_key);
+			$decrypted_data = SpectroCoin_Utilities::spectrocoinDecryptAuthData($encrypted_access_token_data, $this->auth_encryption_key);
 			$this->access_token_data = $decrypted_data;
 			if ($this->spectrocoinIsTokenValid($current_time)) {
 				return $this->access_token_data;
@@ -236,7 +235,7 @@ class SCMerchantClient
 			}
 	
 			$data['expires_at'] = $current_time + $data['expires_in'];
-			$encrypted_access_token_data = SpectroCoin_Utilities::spectrocoinEncryptAuthData(json_encode($data), $this->encryption_key);
+			$encrypted_access_token_data = SpectroCoin_Utilities::spectrocoinEncryptAuthData(json_encode($data), $this->auth_encryption_key);
 	
 			$this->storeEncryptedData($encrypted_access_token_data);
 
@@ -264,7 +263,6 @@ class SCMerchantClient
 	 * @param string $encrypted_access_token_data
 	 */
 	private function storeEncryptedData($encrypted_access_token_data) {
-		// Access the Drupal session
 		$session = \Drupal::request()->getSession();
 		$session->set('encrypted_access_token', $encrypted_access_token_data);
 	}
@@ -275,7 +273,6 @@ class SCMerchantClient
 	 * @return string|null The encrypted access token data if set, null otherwise.
 	 */
 	private function retrieveEncryptedData() {
-		// Access the Drupal session
 		$session = \Drupal::request()->getSession();
 		return $session->get('encrypted_access_token');
 	}

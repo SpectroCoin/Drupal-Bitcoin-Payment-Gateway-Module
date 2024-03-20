@@ -14,6 +14,7 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Url;
 
 use Drupal\commerce_spectrocoin\SCMerchantClient\messages\SpectroCoin_CreateOrderRequest;
+use Drupal\commerce_spectrocoin\SCMerchantClient\data\SpectroCoin_ApiError;
 use Drupal\commerce_spectrocoin\SCMerchantClient\SCMerchantClient;
 
 define('API_URL', 'https://test.spectrocoin.com/api/public');
@@ -133,8 +134,8 @@ class SpectroCoin extends OffsitePaymentGatewayBase
 
       parent::submitConfigurationForm($form, $form_state);
       $values = $form_state->getValue($form['#parents']);
+      $this->configuration['project_id'] = $values['project_id'];
       $this->configuration['client_id'] = $values['client_id'];
-      $this->configuration['merchantApiId'] = $values['merchantApiId'];
       $this->configuration['client_secret'] = $values['client_secret'];
     }
   }
@@ -198,6 +199,9 @@ class SpectroCoin extends OffsitePaymentGatewayBase
     );
     $createOrderResponse = $client->spectroCoinCreateOrder($createOrderRequest);
 
+    if($createOrderResponse instanceof SpectroCoin_ApiError)
+      $payment->setState('failed');
+      $payment->save();
     return $createOrderResponse;
   }
 }

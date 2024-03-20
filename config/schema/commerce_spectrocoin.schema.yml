@@ -6,7 +6,7 @@ commerce_payment.commerce_payment_gateway.plugin.spectrocoin:
       label: "Checkout Display"
     project_id:
       type: string
-      label: "User ID"
+      label: "Project ID"
     client_id:
       type: string
       label: "Client ID"
