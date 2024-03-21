@@ -199,9 +199,10 @@ class SpectroCoin extends OffsitePaymentGatewayBase
     );
     $createOrderResponse = $client->spectroCoinCreateOrder($createOrderRequest);
 
-    if($createOrderResponse instanceof SpectroCoin_ApiError)
+    if($createOrderResponse instanceof SpectroCoin_ApiError){
       $payment->setState('failed');
       $payment->save();
+    }
     return $createOrderResponse;
   }
 }
