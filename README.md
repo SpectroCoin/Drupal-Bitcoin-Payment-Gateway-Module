@@ -28,24 +28,39 @@ Integrate cryptocurrency payments seamlessly into your Drupal store with the [Sp
 
 ## Test order creation on localhost
 
-We gently suggest trying out the plugin in a server environment, as it will not be capable of receiving callbacks from SpectroCoin if it will be hosted on localhost. To successfully create an order on localhost for testing purposes, <b>change these 3 lines in <em>SCMechantClient.php spectrocoinCreateOrder() function</em></b>:
+We gently suggest trying out the plugin in a server environment, as it will not be capable of receiving callbacks from SpectroCoin if it will be hosted on localhost. To successfully create an order on localhost for testing purposes, <b>change these 3 lines in <em>CreateOrderRequest.php</em></b>:
 
-`'callbackUrl' => $request->getCallbackUrl()`, <br>
-`'successUrl' => $request->getSuccessUrl()`, <br>
-`'failureUrl' => $request->getFailureUrl()`
+`$this->callbackUrl = isset($data['callbackUrl']) ? Utils::sanitizeUrl($data['callbackUrl']) : null;`, <br>
+`$this->successUrl = isset($data['successUrl']) ? Utils::sanitizeUrl($data['successUrl']) : null;`, <br>
+`$this->failureUrl = isset($data['failureUrl']) ? Utils::sanitizeUrl($data['failureUrl']) : null;`
 
 <b>To</b>
 
-`'callbackUrl' => 'http://localhost.com'`, <br>
-`'successUrl' => 'http://localhost.com'`, <br>
-`'failureUrl' => 'http://localhost.com'`
+`$this->callbackUrl = "https://localhost.com/";`, <br>
+`$this->successUrl = "https://localhost.com/";`, <br>
+`$this->failureUrl = "https://localhost.com/";`
 
-Adjust it appropriately if your local environment URL differs.
 Don't forget to change it back when migrating website to public.
+
+## Testing Callbacks
+
+Order callbacks in the SpectroCoin plugin allow your WordPress site to automatically process order status changes sent from SpectroCoin. These callbacks notify your server when an order’s status transitions to PAID, EXPIRED, or FAILED. Understanding and testing this functionality ensures your store handles payments accurately and updates order statuses accordingly.
+ 
+1. Go to your SpectroCoin project settings and enable **Test Mode**.
+2. Simulate a payment status:
+   - **PAID**: Sends a callback to mark the order as **Completed** in WordPress.
+   - **EXPIRED**: Sends a callback to mark the order as **Failed** in WordPress.
+3. Ensure your `callbackUrl` is publicly accessible (local servers like `localhost` will not work).
+4. Check the **Order History** in SpectroCoin for callback details. If a callback fails, use the **Retry** button to resend it.
+5. Verify that:
+   - The **order status** in WordPress has been updated accordingly.
+   - The **callback status** in the SpectroCoin dashboard is `200 OK`.
 
 ## Changelog
 
 ### 1.0.0 MAJOR ():
+
+This major update introduces several improvements, including enhanced security, updated coding standards, and a streamlined integration process. **Important:** Users must generate new API credentials (Client ID and Client Secret) in their SpectroCoin account settings to continue using the plugin. The previous private key and merchant ID functionality have been deprecated.
 
 _Updated_: Order creation API endpoint has been updated for enhanced performance and security.
 
@@ -58,6 +73,18 @@ _Added_: API error logging and message displaying in order creation process.
 _Migrated_: Since HTTPful is no longer maintained, we migrated to GuzzleHttp. In this case /vendor directory was added which contains GuzzleHttp dependencies.
 
 _Reworked_: SpectroCoin callback handling was reworked. Added appropriate callback routing for success, fail and callback.
+
+_Updated_ Class and some method names have been updated based on PSR-12 standards.
+
+_Updated_ Composer class autoloading has been implemented.
+
+_Added_ _Config.php_ file has been added to store plugin configuration.
+
+_Added_ _Utils.php_ file has been added to store utility functions.
+
+_Added_ _GenericError.php_ file has been added to handle generic errors.
+
+_Added_ Strict types have been added to all classes.
 
 ## Information
 

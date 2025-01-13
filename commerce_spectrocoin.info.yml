@@ -2,7 +2,7 @@ name: Commerce SpectroCoin
 type: module
 description: Implements SpectroCoin payment gateway in Drupal Commerce checkout.
 package: Commerce (custom)
-core_version_requirement: ^9 || ^10
+core_version_requirement: ^9 || ^10 || ^11
 dependencies:
   - commerce:commerce_checkout
   - commerce:commerce_payment

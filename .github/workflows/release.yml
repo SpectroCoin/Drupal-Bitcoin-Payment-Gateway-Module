@@ -1,0 +1,95 @@
+name: Create tag and release
+
+on:
+  workflow_run:
+    workflows: ["Launch release.yml after closed PR"]
+    types:
+      - completed
+  workflow_dispatch:
+
+jobs:
+  create_tag_and_release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Git
+        run: |
+          git config --global user.email "actions@github.com"
+          git config --global user.name "GitHub Actions"
+
+      - name: Install GitHub CLI
+        run: sudo apt-get install gh
+
+      - name: Fetch Latest PR Info and Check for Existing Tag
+        id: check_tag
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Fetch the latest merged PR title and body using GitHub CLI
+          PR_TITLE=$(gh pr list --state merged --limit 1 --json title --jq '.[0].title')
+          PR_BODY=$(gh pr list --state merged --limit 1 --json body --jq '.[0].body')
+          TAG_NAME=$(echo "$PR_TITLE" | sed 's/ /_/g') # Replace spaces with underscores in the tag name for consistency
+
+          # Check if the tag already exists
+          if git rev-parse "$TAG_NAME" >/dev/null 2>&1; then
+            echo "Tag '$TAG_NAME' already exists. Exiting workflow."
+            echo "TAG_EXISTS=true" >> $GITHUB_ENV
+            exit 0
+          else
+            echo "TAG_EXISTS=false" >> $GITHUB_ENV
+            echo "PR_TITLE: $PR_TITLE"
+            echo "PR_BODY: $PR_BODY"
+            echo "TAG_NAME: $TAG_NAME"
+
+            # Create the tag
+            git tag "$TAG_NAME"
+            git push origin "$TAG_NAME"
+
+            # Create a release using GitHub CLI with the tag name and PR body
+            RELEASE_OUTPUT=$(gh release create "$TAG_NAME" --title "$PR_TITLE" --notes "$PR_BODY")
+
+            # Extract the release URL and upload URL
+            RELEASE_URL=$(echo "$RELEASE_OUTPUT" | grep -oP 'https://github.com/[^ ]+/releases/tag/[^ ]+')
+            echo "Release URL: $RELEASE_URL"
+
+            UPLOAD_URL=$(gh release view "$TAG_NAME" --json uploadUrl --jq '.uploadUrl')
+            echo "UPLOAD_URL: $UPLOAD_URL"
+
+            # Store the upload URL in an environment variable for the next step
+            echo "UPLOAD_URL=$UPLOAD_URL" >> $GITHUB_ENV
+          fi
+
+      - name: Create commerce_spectrocoin.zip
+        if: env.TAG_EXISTS == 'false'
+        run: |
+          MODULE_NAME="commerce_spectrocoin"
+
+          # Create the module directory
+          mkdir -p build/$MODULE_NAME
+
+          # Move all source files into the module directory
+          rsync -av --exclude='build' --exclude='.git*' --exclude='.github*' --exclude='.vscode*' --exclude='*.md' --exclude='.gitignore' ./ build/$MODULE_NAME
+
+          # Change to the build directory and create the zip
+          cd build
+          zip -r "../$MODULE_NAME.zip" "$MODULE_NAME"
+
+          # Return to the root directory
+          cd ..
+        shell: bash
+
+      - name: Upload commerce_spectrocoin.zip as release asset
+        if: env.TAG_EXISTS == 'false'
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ env.UPLOAD_URL }}
+          asset_path: commerce_spectrocoin.zip
+          asset_name: commerce_spectrocoin.zip
+          asset_content_type: application/zip
