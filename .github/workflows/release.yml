@@ -50,24 +50,15 @@ jobs:
             git tag "$TAG_NAME"
             git push origin "$TAG_NAME"
 
-            # Create a release using GitHub CLI with the tag name and PR body
-            RELEASE_OUTPUT=$(gh release create "$TAG_NAME" --title "$PR_TITLE" --notes "$PR_BODY")
-
-            # Extract the release URL and upload URL
-            RELEASE_URL=$(echo "$RELEASE_OUTPUT" | grep -oP 'https://github.com/[^ ]+/releases/tag/[^ ]+')
-            echo "Release URL: $RELEASE_URL"
-
-            UPLOAD_URL=$(gh release view "$TAG_NAME" --json uploadUrl --jq '.uploadUrl')
-            echo "UPLOAD_URL: $UPLOAD_URL"
-
-            # Store the upload URL in an environment variable for the next step
-            echo "UPLOAD_URL=$UPLOAD_URL" >> $GITHUB_ENV
+            # Store the tag name for use in the next steps
+            echo "TAG_NAME=$TAG_NAME" >> $GITHUB_ENV
           fi
 
-      - name: Create commerce_spectrocoin.zip
+      - name: Prepare module directory and create zip file
         if: env.TAG_EXISTS == 'false'
         run: |
           MODULE_NAME="commerce_spectrocoin"
+          TAG_NAME=${{ env.TAG_NAME }}
 
           # Create the module directory
           mkdir -p build/$MODULE_NAME
@@ -75,21 +66,25 @@ jobs:
           # Move all source files into the module directory
           rsync -av --exclude='build' --exclude='.git*' --exclude='.github*' --exclude='.vscode*' --exclude='*.md' --exclude='.gitignore' ./ build/$MODULE_NAME
 
-          # Change to the build directory and create the zip
+          # Change to the build directory and create the zip file with the tag name appended
           cd build
-          zip -r "../$MODULE_NAME.zip" "$MODULE_NAME"
+          ZIP_FILE_NAME="../${MODULE_NAME}_${TAG_NAME}.zip"
+          zip -r "$ZIP_FILE_NAME" "$MODULE_NAME"
 
           # Return to the root directory
           cd ..
+
+          # Print the ZIP file name
+          echo "ZIP_FILE_NAME=$ZIP_FILE_NAME" >> $GITHUB_ENV
         shell: bash
 
-      - name: Upload commerce_spectrocoin.zip as release asset
+      - name: Upload release asset
         if: env.TAG_EXISTS == 'false'
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ env.UPLOAD_URL }}
-          asset_path: commerce_spectrocoin.zip
-          asset_name: commerce_spectrocoin.zip
+          asset_path: ${{ env.ZIP_FILE_NAME }}
+          asset_name: ${{ env.ZIP_FILE_NAME }}
           asset_content_type: application/zip
