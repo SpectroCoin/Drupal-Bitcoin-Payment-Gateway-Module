@@ -81,15 +81,12 @@ jobs:
 
           # Change to the build directory and create the zip file with the tag name appended
           cd build
-          ZIP_FILE_NAME="../${MODULE_NAME}_${TAG_NAME}.zip"
+          ZIP_FILE_NAME="${GITHUB_WORKSPACE}/${MODULE_NAME}_${TAG_NAME}.zip"
           zip -r "$ZIP_FILE_NAME" "$MODULE_NAME"
-
-          # Return to the root directory
-          cd ..
 
           # Print the ZIP file name
           echo "ZIP_FILE_NAME=$ZIP_FILE_NAME" >> $GITHUB_ENV
-        shell: bash
+
 
       - name: Upload release asset
         if: env.TAG_EXISTS == 'false'
@@ -99,5 +96,5 @@ jobs:
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ${{ env.ZIP_FILE_NAME }}
-          asset_name: ${{ env.ZIP_FILE_NAME }}
+          asset_name: "${{ env.TAG_NAME }}.zip"
           asset_content_type: application/zip
