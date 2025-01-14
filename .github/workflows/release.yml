@@ -82,7 +82,7 @@ jobs:
           zip -r "$ZIP_FILE_NAME" "$MODULE_NAME"
 
           echo "ZIP_FILE_NAME=$ZIP_FILE_NAME" >> $GITHUB_ENV
-
+          echo "MODULE_NAME=$MODULE_NAME" >> $GITHUB_ENV
 
       - name: Upload release asset
         if: env.TAG_EXISTS == 'false'
@@ -92,5 +92,6 @@ jobs:
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ${{ env.ZIP_FILE_NAME }}
-          asset_name: "${{ MODULE_NAME }}_${{ env.TAG_NAME }}.zip"
+          asset_name: "${{ env.MODULE_NAME }}_${{ env.TAG_NAME }}.zip"
           asset_content_type: application/zip
+
