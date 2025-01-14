@@ -1,4 +1,4 @@
-name: Commerce SpectroCoin Test
+name: Test Commerce SpectroCoin
 type: module
 description: Implements SpectroCoin payment gateway in Drupal Commerce checkout.
 package: Commerce (custom)
