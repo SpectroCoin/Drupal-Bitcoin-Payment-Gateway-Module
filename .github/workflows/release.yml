@@ -54,6 +54,19 @@ jobs:
             echo "TAG_NAME=$TAG_NAME" >> $GITHUB_ENV
           fi
 
+      - name: Create Release
+        if: env.TAG_EXISTS == 'false'
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ env.TAG_NAME }}
+          release_name: "Release ${{ env.TAG_NAME }}"
+          body: "Automated release created by GitHub Actions."
+          draft: false
+          prerelease: false
+
       - name: Prepare module directory and create zip file
         if: env.TAG_EXISTS == 'false'
         run: |
@@ -84,7 +97,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ env.UPLOAD_URL }}
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ${{ env.ZIP_FILE_NAME }}
           asset_name: ${{ env.ZIP_FILE_NAME }}
           asset_content_type: application/zip
