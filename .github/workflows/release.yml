@@ -73,10 +73,8 @@ jobs:
           MODULE_NAME="commerce_spectrocoin"
           TAG_NAME=${{ env.TAG_NAME }}
 
-          # Create the module directory
           mkdir -p build/$MODULE_NAME
 
-          # Move all source files into the module directory
           rsync -av --exclude='build' --exclude='.git*' --exclude='.github*' --exclude='.vscode*' --exclude='*.md' --exclude='.gitignore' ./ build/$MODULE_NAME
 
           # Change to the build directory and create the zip file with the tag name appended
@@ -84,7 +82,6 @@ jobs:
           ZIP_FILE_NAME="${GITHUB_WORKSPACE}/${MODULE_NAME}_${TAG_NAME}.zip"
           zip -r "$ZIP_FILE_NAME" "$MODULE_NAME"
 
-          # Print the ZIP file name
           echo "ZIP_FILE_NAME=$ZIP_FILE_NAME" >> $GITHUB_ENV
 
 
