@@ -39,7 +39,6 @@ jobs:
           if git rev-parse "$TAG_NAME" >/dev/null 2>&1; then
             echo "Tag '$TAG_NAME' already exists. Exiting workflow."
             echo "TAG_EXISTS=true" >> $GITHUB_ENV
-            exit 0
           else
             echo "TAG_EXISTS=false" >> $GITHUB_ENV
             echo "PR_TITLE: $PR_TITLE"
@@ -68,7 +67,6 @@ jobs:
           prerelease: false
 
       - name: Prepare module directory and create zip file
-        if: env.TAG_EXISTS == 'false'
         run: |
           MODULE_NAME="commerce_spectrocoin"
           TAG_NAME=${{ env.TAG_NAME }}
@@ -95,3 +93,7 @@ jobs:
           asset_name: "${{ env.MODULE_NAME }}_${{ env.TAG_NAME }}.zip"
           asset_content_type: application/zip
 
+      - name: Attach zip file to tag
+        if: env.TAG_EXISTS == 'false'
+        run: |
+          gh release upload "${{ env.TAG_NAME }}" "${{ env.ZIP_FILE_NAME }}" --repo $GITHUB_REPOSITORY
