@@ -1,17 +1,31 @@
 # SpectroCoin Drupal Commerce Crypto Payment Module
 
-Integrate cryptocurrency payments seamlessly into your Drupal store with the [SpectroCoin Crypto Payment Module](https://spectrocoin.com/en/plugins/accept-bitcoin-Drupal.html). This module facilitates the acceptance of a variety of cryptocurrencies, enhancing payment options for your customers. Easily configure and implement secure transactions for a streamlined payment process on your Drupal website. Visit SpectroCoin Crypto Payment Module for Drupal to get started.
+Integrate cryptocurrency payments seamlessly into your Drupal Commerce store with the [SpectroCoin Crypto Payment Module](https://spectrocoin.com/en/plugins/accept-bitcoin-Drupal.html). This module facilitates the acceptance of a variety of cryptocurrencies, enhancing payment options for your customers. Easily configure and implement secure transactions for a streamlined payment process on your Drupal website. Visit SpectroCoin Crypto Payment Module for Drupal to get started.
 
 ## Installation
 
-0. [Drupal Commerce](https://www.drupal.org/project/commerce) module has to be installed and enabled.
+[Drupal Commerce](https://www.drupal.org/project/commerce) module has to be installed and enabled. If not yet installed follow [this guide](https://docs.drupalcommerce.org/v2/installation/#requirements).
+
+### Via composer (recommended)
+
+1. Access your server or local terminal and navigate to Drupal project root directory (where _composer.json_ is located).
+2. Run command...
+
+### By uploading module files via FTP
+
 1. Download latest release from github.
-2. From Drupal admin dashboard navigate to <b>"Extend"</b>-><b>"Add new module"</b> -> upload module zip file.
-   <br>OR<br>
-   Access Drupal site root directory via ftp and navigate to <i>/modules/contrib/</i>. Extract module files, module folder name has to be <i>commerce_spectrocoin</i>.
-3. From Drupal admin dashboard navigate to <b>"Commerce"</b> -> <b>"Configuration"</b> -> <b>"Payment gateways"</b> -> <b>"Add payment gateway"</b>.
-4. In "Plugin" section select <b>"SpectroCoin(Redirect to SpectroCoin)"</b>.
-5. Move to section [Setting up](#setting-up).
+2. Using FTP or file editor from Drupal root directory navigate to_/modules/contrib_ and extract modules files. Ensure that the module directory name is "commerce_spectrocoin".
+3. Unzip and place SpectroCoin module files.
+
+### Via drupal dashboard (Applicable only for Drupal versions 10 and lower)
+
+1. Download latest release from github.
+2. From Drupal admin dashboard navigate to __"Extend"__->__"Add new module"__ -> upload module zip file.
+
+## Enabling module
+
+1. After the installation, from Drupal admin dashboard navigate to <b>"Commerce"</b> -> <b>"Configuration"</b> -> <b>"Payment gateways"</b> -> <b>"Add payment gateway"</b>.
+2. In "Plugin" section select <b>"SpectroCoin(Redirect to SpectroCoin)"</b>.
 
 ## Setting up
 
