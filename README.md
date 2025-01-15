@@ -1,5 +1,9 @@
 # SpectroCoin Drupal Commerce Crypto Payment Module
 
+![Drupal 9 supported](https://img.shields.io/badge/Drupal-9.x-blue?logo=drupal&style=flat)
+![Drupal 10 supported](https://img.shields.io/badge/Drupal-10.x-blue?logo=drupal&style=flat)
+![Drupal 11 supported](https://img.shields.io/badge/Drupal-11.x-blue?logo=drupal&style=flat)
+
 Integrate cryptocurrency payments seamlessly into your Drupal Commerce store with the [SpectroCoin Crypto Payment Module](https://spectrocoin.com/en/plugins/accept-bitcoin-Drupal.html). This module facilitates the acceptance of a variety of cryptocurrencies, enhancing payment options for your customers. Easily configure and implement secure transactions for a streamlined payment process on your Drupal website. Visit SpectroCoin Crypto Payment Module for Drupal to get started.
 
 ## Installation
@@ -9,7 +13,10 @@ Integrate cryptocurrency payments seamlessly into your Drupal Commerce store wit
 ### Via composer (recommended)
 
 1. Access your server or local terminal and navigate to Drupal project root directory (where _composer.json_ is located).
-2. Run command...
+2. Run command:
+```
+composer require spectrocoin/drupal-merchant
+```
 
 ### By uploading module files via FTP
 
@@ -20,12 +27,12 @@ Integrate cryptocurrency payments seamlessly into your Drupal Commerce store wit
 ### Via drupal dashboard (Applicable only for Drupal versions 10 and lower)
 
 1. Download latest release from github.
-2. From Drupal admin dashboard navigate to __"Extend"__->__"Add new module"__ -> upload module zip file.
+2. From Drupal admin dashboard navigate to __Extend__->__Add new module__ -> upload module zip file.
 
 ## Enabling module
 
-1. After the installation, from Drupal admin dashboard navigate to <b>"Commerce"</b> -> <b>"Configuration"</b> -> <b>"Payment gateways"</b> -> <b>"Add payment gateway"</b>.
-2. In "Plugin" section select <b>"SpectroCoin(Redirect to SpectroCoin)"</b>.
+1. After the installation, from Drupal admin dashboard navigate to __Commerce__ -> __Configuration__ -> __Payment gateways__ -> __Add payment gateway__.
+2. In __Plugin__ section select __SpectroCoin(Redirect to SpectroCoin)__.
 
 ## Setting up
 
@@ -42,18 +49,20 @@ Integrate cryptocurrency payments seamlessly into your Drupal Commerce store wit
 
 ## Test order creation on localhost
 
-We gently suggest trying out the plugin in a server environment, as it will not be capable of receiving callbacks from SpectroCoin if it will be hosted on localhost. To successfully create an order on localhost for testing purposes, <b>change these 3 lines in <em>CreateOrderRequest.php</em></b>:
+We gently suggest trying out the plugin in a server environment, as it will not be capable of receiving callbacks from SpectroCoin if it will be hosted on localhost. To successfully create an order on localhost for testing purposes, __change these 3 lines in <em>CreateOrderRequest.php</em>__:
 
-`$this->callbackUrl = isset($data['callbackUrl']) ? Utils::sanitizeUrl($data['callbackUrl']) : null;`, <br>
-`$this->successUrl = isset($data['successUrl']) ? Utils::sanitizeUrl($data['successUrl']) : null;`, <br>
-`$this->failureUrl = isset($data['failureUrl']) ? Utils::sanitizeUrl($data['failureUrl']) : null;`
+```
+$this->callbackUrl = isset($data['callbackUrl']) ? Utils::sanitizeUrl($data['callbackUrl']) : null;,
+$this->successUrl = isset($data['successUrl']) ? Utils::sanitizeUrl($data['successUrl']) : null;,
+$this->failureUrl = isset($data['failureUrl']) ? Utils::sanitizeUrl($data['failureUrl']) : null;
+```
+__To__
 
-<b>To</b>
-
-`$this->callbackUrl = "https://localhost.com/";`, <br>
-`$this->successUrl = "https://localhost.com/";`, <br>
-`$this->failureUrl = "https://localhost.com/";`
-
+```
+$this->callbackUrl = "https://localhost.com/";,
+$this->successUrl = "https://localhost.com/";,
+$this->failureUrl = "https://localhost.com/";
+```
 Don't forget to change it back when migrating website to public.
 
 ## Testing Callbacks
@@ -76,17 +85,17 @@ Order callbacks in the SpectroCoin plugin allow your WordPress site to automatic
 
 This major update introduces several improvements, including enhanced security, updated coding standards, and a streamlined integration process. **Important:** Users must generate new API credentials (Client ID and Client Secret) in their SpectroCoin account settings to continue using the plugin. The previous private key and merchant ID functionality have been deprecated.
 
-_Updated_: Order creation API endpoint has been updated for enhanced performance and security.
+_Updated_ Order creation API endpoint has been updated for enhanced performance and security.
 
-_Removed_: Private key functionality and merchant ID requirement have been removed to streamline integration.
+_Removed_ Private key functionality and merchant ID requirement have been removed to streamline integration.
 
-_Added_: OAuth functionality introduced for authentication, requiring Client ID and Client Secret for secure API access.
+_Added_ OAuth functionality introduced for authentication, requiring Client ID and Client Secret for secure API access.
 
-_Added_: API error logging and message displaying in order creation process.
+_Added_ API error logging and message displaying in order creation process.
 
-_Migrated_: Since HTTPful is no longer maintained, we migrated to GuzzleHttp. In this case /vendor directory was added which contains GuzzleHttp dependencies.
+_Migrated_ Since HTTPful is no longer maintained, we migrated to GuzzleHttp. In this case /vendor directory was added which contains GuzzleHttp dependencies.
 
-_Reworked_: SpectroCoin callback handling was reworked. Added appropriate callback routing for success, fail and callback.
+_Reworked_ SpectroCoin callback handling was reworked. Added appropriate callback routing for success, fail and callback.
 
 _Updated_ Class and some method names have been updated based on PSR-12 standards.
 
@@ -105,7 +114,7 @@ _Added_ Strict types have been added to all classes.
 This client has been developed by SpectroCoin.com If you need any further support regarding our services you can contact us via:
 
 E-mail: merchant@spectrocoin.com </br>
-Skype: spectrocoin_merchant </br>
+Skype: [spectrocoin_merchant](https://join.skype.com/invite/iyXHU7o08KkW) </br>
 [Web](https://spectrocoin.com) </br>
 [X (formerly Twitter)](https://twitter.com/spectrocoin) </br>
 [Facebook](https://www.facebook.com/spectrocoin/)

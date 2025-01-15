@@ -1,5 +1,5 @@
 {
-  "name": "spectrocointest/drupal-merchant-test",
+  "name": "spectrocoin/drupal-merchant",
   "description": "SpectroCoin cryptocurrency payment gateway for Drupal",
   "type": "drupal-module",
   "version": "1.0.0",
@@ -16,8 +16,8 @@
     "altcoin"
   ],
   "require": {
-    "composer/installers": "^1.10",
-    "guzzlehttp/guzzle": "^7.8"
+      "composer/installers": "^1.10 || ^2.0 || ^3.0",
+      "guzzlehttp/guzzle": "^7.8"
   },
   "license": "GPL-3.0+",
   "config": {
