@@ -30,26 +30,21 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Fetch the latest merged PR title and body using GitHub CLI
           PR_TITLE=$(gh pr list --state merged --limit 1 --json title --jq '.[0].title')
           PR_BODY=$(gh pr list --state merged --limit 1 --json body --jq '.[0].body')
-          TAG_NAME=$(echo "$PR_TITLE" | sed 's/ /_/g') # Replace spaces with underscores in the tag name for consistency
+          TAG_NAME=$(echo "$PR_TITLE" | sed 's/ /_/g')
 
-          # Check if the tag already exists
           if git rev-parse "$TAG_NAME" >/dev/null 2>&1; then
             echo "Tag '$TAG_NAME' already exists. Exiting workflow."
             echo "TAG_EXISTS=true" >> $GITHUB_ENV
+            exit 0
           else
             echo "TAG_EXISTS=false" >> $GITHUB_ENV
-            echo "PR_TITLE: $PR_TITLE"
-            echo "PR_BODY: $PR_BODY"
             echo "TAG_NAME: $TAG_NAME"
+            echo "PR_BODY: $PR_BODY"
 
-            # Create the tag
             git tag "$TAG_NAME"
             git push origin "$TAG_NAME"
-
-            # Store the tag name for use in the next steps
             echo "TAG_NAME=$TAG_NAME" >> $GITHUB_ENV
           fi
 
@@ -67,14 +62,13 @@ jobs:
           prerelease: false
 
       - name: Prepare module directory and create zip file
+        if: env.TAG_EXISTS == 'false'
         run: |
           MODULE_NAME="commerce_spectrocoin"
           TAG_NAME=${{ env.TAG_NAME }}
 
           mkdir -p build/$MODULE_NAME
-
           rsync -av --exclude='build' --exclude='.git*' --exclude='.github*' --exclude='.vscode*' --exclude='*.md' --exclude='.gitignore' ./ build/$MODULE_NAME
-
           cd build
           ZIP_FILE_NAME="${GITHUB_WORKSPACE}/${MODULE_NAME}_${TAG_NAME}.zip"
           zip -r "$ZIP_FILE_NAME" "$MODULE_NAME"
@@ -93,7 +87,25 @@ jobs:
           asset_name: "${{ env.MODULE_NAME }}_${{ env.TAG_NAME }}.zip"
           asset_content_type: application/zip
 
-      - name: Attach zip file to tag
+      - name: Upload asset to tag
         if: env.TAG_EXISTS == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release upload "${{ env.TAG_NAME }}" "${{ env.ZIP_FILE_NAME }}" --repo $GITHUB_REPOSITORY
+          TAG_NAME=${{ env.TAG_NAME }}
+          ZIP_FILE_NAME=${{ env.ZIP_FILE_NAME }}
+          MODULE_NAME=${{ env.MODULE_NAME }}
+
+          # Get the tag reference ID
+          TAG_REF_ID=$(gh api repos/:owner/:repo/git/refs/tags/$TAG_NAME --jq '.object.sha')
+
+          # Upload the zip file to the tag
+          UPLOAD_URL=$(gh api repos/:owner/:repo/releases | jq -r --arg TAG "$TAG_REF_ID" '.[] | select(.tag_name==$TAG) | .upload_url')
+          UPLOAD_URL="${UPLOAD_URL%%{*}}"
+
+          # Use curl to upload
+          curl -X POST \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Content-Type: application/zip" \
+            --data-binary "@$ZIP_FILE_NAME" \
+            "$UPLOAD_URL?name=${MODULE_NAME}_${TAG_NAME}.zip"
