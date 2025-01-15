@@ -61,7 +61,7 @@ jobs:
             --prerelease=false)
           RELEASE_URL=$(echo "$RELEASE_OUTPUT" | grep -Eo 'https://github\.com/[^ ]+')
           echo "RELEASE_URL=$RELEASE_URL" >> $GITHUB_ENV
-
+          echo "UPLOAD_URL=${RELEASE_URL/\/tag\//\/releases\/}/assets" >> $GITHUB_ENV
 
       - name: Prepare module directory and create zip file
         if: env.TAG_EXISTS == 'false'
@@ -84,7 +84,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          upload_url: ${{ env.UPLOAD_URL }}
           asset_path: ${{ env.ZIP_FILE_NAME }}
           asset_name: "${{ env.MODULE_NAME }}_${{ env.TAG_NAME }}.zip"
           asset_content_type: application/zip
@@ -97,19 +97,8 @@ jobs:
           TAG_NAME=${{ env.TAG_NAME }}
           ZIP_FILE_NAME=${{ env.ZIP_FILE_NAME }}
           MODULE_NAME=${{ env.MODULE_NAME }}
+          UPLOAD_URL=${{ env.UPLOAD_URL }}
 
-          # Find the release ID for the tag
-          RELEASE_ID=$(gh api repos/:owner/:repo/releases --jq '.[] | select(.tag_name=="'"$TAG_NAME"'") | .id')
-
-          if [ -z "$RELEASE_ID" ]; then
-            echo "Error: Unable to find release for tag $TAG_NAME."
-            exit 1
-          fi
-
-          # Correctly format the upload URL
-          UPLOAD_URL="https://uploads.github.com/repos/:owner/:repo/releases/$RELEASE_ID/assets"
-
-          # Use curl to upload the asset
           curl -X POST \
             -H "Authorization: Bearer $GH_TOKEN" \
             -H "Content-Type: application/zip" \
