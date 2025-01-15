@@ -96,14 +96,18 @@ jobs:
           ZIP_FILE_NAME=${{ env.ZIP_FILE_NAME }}
           MODULE_NAME=${{ env.MODULE_NAME }}
 
-          # Get the tag reference ID
-          TAG_REF_ID=$(gh api repos/:owner/:repo/git/refs/tags/$TAG_NAME --jq '.object.sha')
+          # Find the release ID for the tag
+          RELEASE_ID=$(gh api repos/:owner/:repo/releases --jq '.[] | select(.tag_name=="'"$TAG_NAME"'") | .id')
 
-          # Upload the zip file to the tag
-          UPLOAD_URL=$(gh api repos/:owner/:repo/releases | jq -r --arg TAG "$TAG_REF_ID" '.[] | select(.tag_name==$TAG) | .upload_url')
-          UPLOAD_URL="${UPLOAD_URL%%{*}}"
+          if [ -z "$RELEASE_ID" ]; then
+            echo "Error: Unable to find release for tag $TAG_NAME."
+            exit 1
+          fi
 
-          # Use curl to upload
+          # Correctly format the upload URL
+          UPLOAD_URL="https://uploads.github.com/repos/:owner/:repo/releases/$RELEASE_ID/assets"
+
+          # Use curl to upload the asset
           curl -X POST \
             -H "Authorization: Bearer $GH_TOKEN" \
             -H "Content-Type: application/zip" \
