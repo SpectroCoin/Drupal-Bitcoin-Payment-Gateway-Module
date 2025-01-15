@@ -21,7 +21,6 @@ jobs:
         run: |
           git config --global user.email "actions@github.com"
           git config --global user.name "GitHub Actions"
-
       - name: Install GitHub CLI
         run: sudo apt-get install gh
 
@@ -33,7 +32,6 @@ jobs:
           PR_TITLE=$(gh pr list --state merged --limit 1 --json title --jq '.[0].title')
           PR_BODY=$(gh pr list --state merged --limit 1 --json body --jq '.[0].body')
           TAG_NAME=$(echo "$PR_TITLE" | sed 's/ /_/g')
-
           if git rev-parse "$TAG_NAME" >/dev/null 2>&1; then
             echo "Tag '$TAG_NAME' already exists. Exiting workflow."
             echo "TAG_EXISTS=true" >> $GITHUB_ENV
@@ -42,49 +40,42 @@ jobs:
             echo "TAG_EXISTS=false" >> $GITHUB_ENV
             echo "TAG_NAME: $TAG_NAME"
             echo "PR_BODY: $PR_BODY"
-
             git tag "$TAG_NAME"
             git push origin "$TAG_NAME"
             echo "TAG_NAME=$TAG_NAME" >> $GITHUB_ENV
           fi
-
       - name: Create Release
         if: env.TAG_EXISTS == 'false'
         id: create_release
+        uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          RELEASE_OUTPUT=$(gh release create "${{ env.TAG_NAME }}" \
-            --title "${{ env.TAG_NAME }}" \
-            --notes "Automated release created by GitHub Actions." \
-            --draft=false \
-            --prerelease=false)
-          RELEASE_URL=$(echo "$RELEASE_OUTPUT" | grep -Eo 'https://github\.com/[^ ]+')
-          echo "RELEASE_URL=$RELEASE_URL" >> $GITHUB_ENV
-          echo "UPLOAD_URL=${RELEASE_URL/\/tag\//\/releases\/}/assets" >> $GITHUB_ENV
+        with:
+          tag_name: ${{ env.TAG_NAME }}
+          release_name: "${{ env.TAG_NAME }}"
+          body: "Automated release created by GitHub Actions."
+          draft: false
+          prerelease: false
 
       - name: Prepare module directory and create zip file
         if: env.TAG_EXISTS == 'false'
         run: |
           MODULE_NAME="commerce_spectrocoin"
           TAG_NAME=${{ env.TAG_NAME }}
-
           mkdir -p build/$MODULE_NAME
           rsync -av --exclude='build' --exclude='.git*' --exclude='.github*' --exclude='.vscode*' --exclude='*.md' --exclude='.gitignore' ./ build/$MODULE_NAME
           cd build
           ZIP_FILE_NAME="${GITHUB_WORKSPACE}/${MODULE_NAME}_${TAG_NAME}.zip"
           zip -r "$ZIP_FILE_NAME" "$MODULE_NAME"
-
           echo "ZIP_FILE_NAME=$ZIP_FILE_NAME" >> $GITHUB_ENV
           echo "MODULE_NAME=$MODULE_NAME" >> $GITHUB_ENV
-
       - name: Upload release asset
         if: env.TAG_EXISTS == 'false'
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ env.UPLOAD_URL }}
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ${{ env.ZIP_FILE_NAME }}
           asset_name: "${{ env.MODULE_NAME }}_${{ env.TAG_NAME }}.zip"
           asset_content_type: application/zip
@@ -97,8 +88,15 @@ jobs:
           TAG_NAME=${{ env.TAG_NAME }}
           ZIP_FILE_NAME=${{ env.ZIP_FILE_NAME }}
           MODULE_NAME=${{ env.MODULE_NAME }}
-          UPLOAD_URL=${{ env.UPLOAD_URL }}
-
+          # Find the release ID for the tag
+          RELEASE_ID=$(gh api repos/:owner/:repo/releases --jq '.[] | select(.tag_name=="'"$TAG_NAME"'") | .id')
+          if [ -z "$RELEASE_ID" ]; then
+            echo "Error: Unable to find release for tag $TAG_NAME."
+            exit 1
+          fi
+          # Correctly format the upload URL
+          UPLOAD_URL="https://uploads.github.com/repos/:owner/:repo/releases/$RELEASE_ID/assets"
+          # Use curl to upload the asset
           curl -X POST \
             -H "Authorization: Bearer $GH_TOKEN" \
             -H "Content-Type: application/zip" \
