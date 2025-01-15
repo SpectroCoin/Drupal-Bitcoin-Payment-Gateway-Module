@@ -51,15 +51,15 @@ jobs:
       - name: Create Release
         if: env.TAG_EXISTS == 'false'
         id: create_release
-        uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ env.TAG_NAME }}
-          release_name: "${{ env.TAG_NAME }}"
-          body: "Automated release created by GitHub Actions."
-          draft: false
-          prerelease: false
+        run: |
+          RELEASE_ID=$(gh release create "${{ env.TAG_NAME }}" \
+            --title "${{ env.TAG_NAME }}" \
+            --notes "Automated release created by GitHub Actions." \
+            --json id \
+            --jq '.id')
+          echo "RELEASE_ID=$RELEASE_ID" >> $GITHUB_ENV
 
       - name: Prepare module directory and create zip file
         if: env.TAG_EXISTS == 'false'
