@@ -54,12 +54,14 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          RELEASE_ID=$(gh release create "${{ env.TAG_NAME }}" \
+          RELEASE_OUTPUT=$(gh release create "${{ env.TAG_NAME }}" \
             --title "${{ env.TAG_NAME }}" \
             --notes "Automated release created by GitHub Actions." \
-            --json id \
-            --jq '.id')
-          echo "RELEASE_ID=$RELEASE_ID" >> $GITHUB_ENV
+            --draft=false \
+            --prerelease=false)
+          RELEASE_URL=$(echo "$RELEASE_OUTPUT" | grep -Eo 'https://github\.com/[^ ]+')
+          echo "RELEASE_URL=$RELEASE_URL" >> $GITHUB_ENV
+
 
       - name: Prepare module directory and create zip file
         if: env.TAG_EXISTS == 'false'
