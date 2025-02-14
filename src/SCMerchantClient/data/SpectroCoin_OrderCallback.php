@@ -6,7 +6,6 @@ use Drupal\commerce_spectrocoin\SCMerchantClient\components\SpectroCoin_Utilitie
 
 class SpectroCoin_OrderCallback
 {
-
 	private $userId;
 	private $merchantApiId;
 	private $merchantId;
