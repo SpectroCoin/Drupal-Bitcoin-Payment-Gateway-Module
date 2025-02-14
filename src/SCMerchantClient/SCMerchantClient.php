@@ -53,7 +53,7 @@ class SCMerchantClient
 		$this->client_id = $client_id;
 		$this->client_secret = $client_secret;
 		$this->guzzle_client = new Client();
-		$this->public_spectrocoin_cert_location = "https://test.spectrocoin.com/public.pem"; //PROD:https://spectrocoin.com/files/merchant.public.pem
+		$this->public_spectrocoin_cert_location = "https://spectrocoin.com/files/merchant.public.pem"; //PROD:https://spectrocoin.com/files/merchant.public.pem
 		$this->auth_encryption_key = $this->initializeEncryptionKey();
 	}
 
