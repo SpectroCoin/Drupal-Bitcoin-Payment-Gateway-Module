@@ -28,7 +28,7 @@ define('AUTH_URL', 'https://test.spectrocoin.com/api/public/oauth/token');
  *   label = @Translation("SpectroCoin"),
  *   display_label = @Translation("Redirect to SpectroCoin"),
  *   forms = {
- *     "offsite-payment" = "Drupal\\commerce_spectrocoin\\PluginForm\\SpectroCoinRedirectForm"
+ *     "offsite-payment" = "Drupal\commerce_spectrocoin\PluginForm\SpectroCoinRedirectForm"
  *   },
  * )
  */
