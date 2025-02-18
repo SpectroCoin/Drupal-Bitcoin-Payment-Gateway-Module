@@ -17,8 +17,8 @@ use Drupal\commerce_spectrocoin\SCMerchantClient\messages\SpectroCoin_CreateOrde
 use Drupal\commerce_spectrocoin\SCMerchantClient\data\SpectroCoin_ApiError;
 use Drupal\commerce_spectrocoin\SCMerchantClient\SCMerchantClient;
 
-define('API_URL', 'https://spectrocoin.com/api/public');
-define('AUTH_URL', 'https://spectrocoin.com/api/public/oauth/token');
+define('API_URL', 'https://test.spectrocoin.com/api/public');
+define('AUTH_URL', 'https://test.spectrocoin.com/api/public/oauth/token');
 
 
 class SpectroCoin extends OffsitePaymentGatewayBase
