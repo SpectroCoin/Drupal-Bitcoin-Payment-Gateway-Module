@@ -138,7 +138,7 @@ class SpectroCoin extends OffsitePaymentGatewayBase
     $payment = $paymentStorage->create([
       'state' => 'Open',
       'amount' => $payment->getAmount(),
-      'payment_gateway' => $this->entityId,
+      'payment_gateway' => $this->entity->id(),
       'payment_method' => 'spectrocoin',
       'order_id' => $order->id(),
       'test' => $this->getMode() == 'test',
