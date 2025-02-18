@@ -20,7 +20,25 @@ use Drupal\commerce_spectrocoin\SCMerchantClient\SCMerchantClient;
 define('API_URL', 'https://test.spectrocoin.com/api/public');
 define('AUTH_URL', 'https://test.spectrocoin.com/api/public/oauth/token');
 
-
+/**
+ * Provides the SpectroCoin payment gateway.
+ *
+ * @CommercePaymentGateway(
+ *   id = "spectrocoin",
+ *   label = @Translation("SpectroCoin"),
+ *   display_label = @Translation("SpectroCoin"),
+ *   modes = {
+ *     "test" = @Translation("Test"),
+ *     "live" = @Translation("Live")
+ *   },
+ *   forms = {
+ *     "offsite-payment" = "Drupal\\commerce_spectrocoin\\PluginForm\\SpectroCoinRedirectForm"
+ *   },
+ *   payment_method_types = {
+ *     "credit_card"
+ *   },
+ * )
+ */
 class SpectroCoin extends OffsitePaymentGatewayBase
 {
   /**
