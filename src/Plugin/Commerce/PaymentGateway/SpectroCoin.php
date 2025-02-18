@@ -126,27 +126,27 @@ class SpectroCoin extends OffsitePaymentGatewayBase
    * @param array $extra
    * @return mixed
    */
-  public function createSpectroCoinInvoice(PaymentInterface $payment, array $extra)
-  {
+  public function createSpectroCoinInvoice(PaymentInterface $payment, array $extra) {
     $order = $payment->getOrder();
-
+  
     /** @var \Drupal\commerce_payment\PaymentStorageInterface $paymentStorage */
     $paymentStorage = $this->entityTypeManager->getStorage('commerce_payment');
-
+  
     $paymentAmount = $payment->getAmount();
-
+  
+    // Use the payment gateway entity from the Payment object.
     $payment = $paymentStorage->create([
       'state' => 'Open',
       'amount' => $payment->getAmount(),
-      'payment_gateway' => $this->entity->id(),
+      'payment_gateway' => $payment->getPaymentGateway()->id(),
       'payment_method' => 'spectrocoin',
       'order_id' => $order->id(),
       'test' => $this->getMode() == 'test',
       'authorized' => $this->time->getRequestTime(),
     ]);
-
+  
     $payment->save();
-
+  
     $configuration = $this->getConfiguration();
     $client = new SCMerchantClient(
       AUTH_URL,
@@ -178,11 +178,12 @@ class SpectroCoin extends OffsitePaymentGatewayBase
       $locale
     );
     $createOrderResponse = $client->spectroCoinCreateOrder($createOrderRequest);
-
-    if($createOrderResponse instanceof SpectroCoin_ApiError){
+  
+    if ($createOrderResponse instanceof SpectroCoin_ApiError) {
       $payment->setState('failed');
       $payment->save();
     }
     return $createOrderResponse;
   }
+  
 }
