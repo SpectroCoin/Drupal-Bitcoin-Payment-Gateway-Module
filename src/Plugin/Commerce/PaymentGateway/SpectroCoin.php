@@ -26,52 +26,14 @@ define('AUTH_URL', 'https://test.spectrocoin.com/api/public/oauth/token');
  * @CommercePaymentGateway(
  *   id = "spectrocoin",
  *   label = @Translation("SpectroCoin"),
- *   display_label = @Translation("SpectroCoin"),
- *   modes = {
- *     "test" = @Translation("Test"),
- *     "live" = @Translation("Live")
- *   },
+ *   display_label = @Translation("Redirect to SpectroCoin"),
  *   forms = {
  *     "offsite-payment" = "Drupal\\commerce_spectrocoin\\PluginForm\\SpectroCoinRedirectForm"
- *   },
- *   payment_method_types = {
- *     "credit_card"
  *   },
  * )
  */
 class SpectroCoin extends OffsitePaymentGatewayBase
 {
-  /**
-   * Summary of __construct
-   * @param array $configuration
-   * @param mixed $plugin_id
-   * @param mixed $plugin_definition
-   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
-   * @param \Drupal\commerce_payment\PaymentTypeManager $payment_type_manager
-   * @param \Drupal\commerce_payment\PaymentMethodTypeManager $payment_method_type_manager
-   * @param \Drupal\Component\Datetime\TimeInterface $time
-   */
-  public function __construct(
-    array $configuration,
-    $plugin_id,
-    $plugin_definition,
-    EntityTypeManagerInterface $entity_type_manager,
-    PaymentTypeManager $payment_type_manager,
-    PaymentMethodTypeManager $payment_method_type_manager,
-    TimeInterface $time
-  ) {
-    parent::__construct(
-      $configuration,
-      $plugin_id,
-      $plugin_definition,
-      $entity_type_manager,
-      $payment_type_manager,
-      $payment_method_type_manager,
-      $time
-    );
-  }
-
-
   /**
    * Summary of defaultConfiguration
    * @return array
