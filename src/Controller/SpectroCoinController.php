@@ -9,6 +9,7 @@ use Symfony\Component\HttpFoundation\RedirectResponse;
 use Drupal\commerce_order\Entity\Order;
 use InvalidArgumentException;
 use Exception;
+use Drupal\Core\Url;
 
 /**
  * Controller for handling SpectroCoin callbacks and redirects.
@@ -59,9 +60,12 @@ class SpectroCoinController extends ControllerBase {
       $status = strtolower($order_callback->getStatus());
       switch ($status) {
         case 'new':
+          // Do nothing.
           break;
 
         case 'pending':
+          // Optionally, update the order state to pending.
+          $order->set('state', 'pending');
           break;
 
         case 'expired':
@@ -84,7 +88,9 @@ class SpectroCoinController extends ControllerBase {
       $order->save();
 
       // Respond as expected by SpectroCoin.
-      return new Response('*ok*', 200);
+      $response = new Response('*ok*', 200);
+      $response->headers->set('Content-Type', 'text/plain');
+      return $response;
     }
     catch (InvalidArgumentException $e) {
       \Drupal::logger('commerce_spectrocoin')
@@ -101,14 +107,23 @@ class SpectroCoinController extends ControllerBase {
   /**
    * Redirects the customer after a successful payment.
    *
-   * Typically, Drupal Commerce’s checkout completion page is at
-   * "/checkout/complete". Adjust the URL below if needed.
+   * Expects an "order_id" query parameter to load the correct order.
+   * The URL is built using the 'commerce_checkout.complete' route.
    *
    * @return \Symfony\Component\HttpFoundation\RedirectResponse
    *   A redirect response.
    */
   public function success() {
-    return new RedirectResponse('/checkout/complete');
+    $order_id = \Drupal::request()->query->get('order_id');
+    if ($order_id) {
+      $order = Order::load((int) $order_id);
+      if ($order) {
+        $url = Url::fromRoute('commerce_checkout.complete', ['commerce_order' => $order->id()]);
+        return new RedirectResponse($url->toString());
+      }
+    }
+    // Fallback: redirect to the homepage if no valid order_id is provided.
+    return new RedirectResponse('/');
   }
 
   /**
@@ -121,7 +136,6 @@ class SpectroCoinController extends ControllerBase {
    *   A redirect response.
    */
   public function failure() {
-    // If an order_id is provided in the URL, attempt to update the order.
     $order_id = \Drupal::request()->query->get('order_id');
     if ($order_id) {
       $order = Order::load((int) $order_id);
@@ -138,9 +152,7 @@ class SpectroCoinController extends ControllerBase {
       \Drupal::logger('commerce_spectrocoin')
         ->error('SpectroCoin Error: Order ID is not available in failure callback.');
     }
-    // Add an error message for the customer.
     $this->messenger()->addError($this->t('Your order was canceled. Please try again.'));
-    // Redirect to the cart page (default Drupal Commerce cart URL).
     return new RedirectResponse('/cart');
   }
 
