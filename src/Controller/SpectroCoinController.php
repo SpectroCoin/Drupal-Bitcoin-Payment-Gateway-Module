@@ -26,6 +26,12 @@ class SpectroCoinController extends ControllerBase {
    */
   public function callback() {
     $request = \Drupal::request();
+    // --- Debug Logging ---
+    \Drupal::logger('commerce_spectrocoin')->debug('Callback request method: ' . $request->getMethod());
+    \Drupal::logger('commerce_spectrocoin')->debug('Callback query parameters: ' . print_r($request->query->all(), TRUE));
+    \Drupal::logger('commerce_spectrocoin')->debug('Callback POST data: ' . print_r($_POST, TRUE));
+    // --- End Debug Logging ---
+
     if ($request->getMethod() !== 'POST') {
       \Drupal::logger('commerce_spectrocoin')
         ->error('SpectroCoin Error: Invalid request method, POST is required');
@@ -42,6 +48,7 @@ class SpectroCoinController extends ControllerBase {
       // Extract the order ID. (Assuming a format like "123-abc")
       $order_id_parts = explode('-', $order_callback->getOrderId());
       $order_id = (int) $order_id_parts[0];
+      \Drupal::logger('commerce_spectrocoin')->debug('Extracted order_id: ' . $order_id);
       if (!$order_id) {
         \Drupal::logger('commerce_spectrocoin')
           ->error('SpectroCoin Error: Order ID is invalid.');
@@ -55,16 +62,18 @@ class SpectroCoinController extends ControllerBase {
           ->error('SpectroCoin Error: Order not found - Order ID: ' . $order_id);
         return new Response('Order not found', 404);
       }
+      
+      \Drupal::logger('commerce_spectrocoin')->debug('Current order state: ' . $order->getState()->value);
 
       // Map the callback status to a Drupal order state.
       $status = strtolower($order_callback->getStatus());
+      \Drupal::logger('commerce_spectrocoin')->debug('Callback status: ' . $status);
       switch ($status) {
         case 'new':
           // Do nothing.
           break;
 
         case 'pending':
-          // Optionally, update the order state to pending.
           $order->set('state', 'pending');
           break;
 
@@ -86,6 +95,7 @@ class SpectroCoinController extends ControllerBase {
           return new Response('Unknown order status: ' . $order_callback->getStatus(), 400);
       }
       $order->save();
+      \Drupal::logger('commerce_spectrocoin')->debug('Order saved with state: ' . $order->getState()->value);
 
       // Respond as expected by SpectroCoin.
       $response = new Response('*ok*', 200);
@@ -122,7 +132,6 @@ class SpectroCoinController extends ControllerBase {
         return new RedirectResponse($url->toString());
       }
     }
-    // Fallback: redirect to the homepage if no valid order_id is provided.
     return new RedirectResponse('/');
   }
 

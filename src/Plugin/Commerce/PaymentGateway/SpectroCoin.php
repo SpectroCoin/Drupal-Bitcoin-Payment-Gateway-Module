@@ -32,14 +32,9 @@ define('AUTH_URL', 'https://spectrocoin.com/api/public/oauth/token');
  *   },
  * )
  */
-class SpectroCoin extends OffsitePaymentGatewayBase
-{
-  /**
-   * Summary of defaultConfiguration
-   * @return array
-   */
-  public function defaultConfiguration()
-  {
+class SpectroCoin extends OffsitePaymentGatewayBase {
+
+  public function defaultConfiguration() {
     return [
       'checkout_display' => 'both',
       'project_id' => '',
@@ -48,70 +43,45 @@ class SpectroCoin extends OffsitePaymentGatewayBase
     ] + parent::defaultConfiguration();
   }
 
-
-  /**
-   * Summary of buildConfigurationForm
-   * @param array $form
-   * @param \Drupal\Core\Form\FormStateInterface $form_state
-   * @return array
-   */
-  public function buildConfigurationForm(array $form, FormStateInterface $form_state)
-  {
+  public function buildConfigurationForm(array $form, FormStateInterface $form_state) {
     $form = parent::buildConfigurationForm($form, $form_state);
 
-    $form['project_id'] = array(
+    $form['project_id'] = [
       '#type' => 'textfield',
       '#default_value' => $this->configuration['project_id'],
       '#title' => t('Project Id'),
       '#size' => 45,
       '#maxlength' => 130,
       '#required' => TRUE,
-    );
+    ];
 
-    $form['client_id'] = array(
+    $form['client_id'] = [
       '#type' => 'textfield',
       '#default_value' => $this->configuration['client_id'],
       '#title' => t('Client Id'),
       '#size' => 45,
       '#maxlength' => 200,
       '#required' => TRUE,
-    );
+    ];
 
-    $form['client_secret'] = array(
+    $form['client_secret'] = [
       '#type' => 'textfield',
       '#default_value' => $this->configuration['client_secret'],
       '#title' => t('Client Secret'),
       '#size' => 45,
       '#maxlength' => 200,
       '#required' => TRUE,
-    );
+    ];
 
     return $form;
   }
 
-  /**
-   * Summary of validateConfigurationForm
-   * @param array $form
-   * @param \Drupal\Core\Form\FormStateInterface $form_state
-   * @return void
-   */
-  public function validateConfigurationForm(array &$form, FormStateInterface $form_state)
-  {
+  public function validateConfigurationForm(array &$form, FormStateInterface $form_state) {
     parent::validateConfigurationForm($form, $form_state);
-
   }
 
-
-  /**
-   * Summary of submitConfigurationForm
-   * @param array $form
-   * @param \Drupal\Core\Form\FormStateInterface $form_state
-   * @return void
-   */
-  public function submitConfigurationForm(array &$form, FormStateInterface $form_state)
-  {
+  public function submitConfigurationForm(array &$form, FormStateInterface $form_state) {
     if (!$form_state->getErrors()) {
-
       parent::submitConfigurationForm($form, $form_state);
       $values = $form_state->getValue($form['#parents']);
       $this->configuration['project_id'] = $values['project_id'];
@@ -120,21 +90,25 @@ class SpectroCoin extends OffsitePaymentGatewayBase
     }
   }
 
-/**
- * Summary of createSpectroCoinInvoice
- * @param \Drupal\commerce_payment\Entity\PaymentInterface $payment
- * @param array $extra
- * @return mixed
- */
+  /**
+   * Creates a SpectroCoin invoice.
+   *
+   * @param \Drupal\commerce_payment\Entity\PaymentInterface $payment
+   * @param array $extra
+   *
+   * @return mixed
+   */
   public function createSpectroCoinInvoice(PaymentInterface $payment, array $extra) {
     $order = $payment->getOrder();
-
+    
+    \Drupal::logger('commerce_spectrocoin')->debug('Before updating, order ID ' . $order->id() . ' is in state: ' . $order->getState()->value);
+    
     /** @var \Drupal\commerce_payment\PaymentStorageInterface $paymentStorage */
     $paymentStorage = $this->entityTypeManager->getStorage('commerce_payment');
-
+    
     $paymentAmount = $payment->getAmount();
-
-    // Use the payment gateway entity from the Payment object.
+    
+    // Create a new Payment entity.
     $payment = $paymentStorage->create([
       'state' => 'Open',
       'amount' => $payment->getAmount(),
@@ -144,16 +118,19 @@ class SpectroCoin extends OffsitePaymentGatewayBase
       'test' => $this->getMode() == 'test',
       'authorized' => $this->time->getRequestTime(),
     ]);
-
+    
     $payment->save();
-
-    // If the order is still in a 'draft' state, update it to 'pending'
-    // so that it appears in the Orders list rather than just as a cart.
+    
+    // If the order is still in 'draft', update it to 'pending'
     if ($order->getState()->value === 'draft') {
       $order->set('state', 'pending');
       $order->save();
+      \Drupal::logger('commerce_spectrocoin')->debug('Order ID ' . $order->id() . ' updated to state: ' . $order->getState()->value);
     }
-
+    else {
+      \Drupal::logger('commerce_spectrocoin')->debug('Order ID ' . $order->id() . ' was already in state: ' . $order->getState()->value);
+    }
+    
     $configuration = $this->getConfiguration();
     $client = new SCMerchantClient(
       AUTH_URL,
@@ -168,9 +145,23 @@ class SpectroCoin extends OffsitePaymentGatewayBase
     $receive_amount = $paymentAmount->getNumber();
     $receive_currency_code = $paymentAmount->getCurrencyCode();
     $pay_currency_code = 'BTC';
-    $callback_url = Url::fromRoute('commerce_spectrocoin.callback', ['commerce_order' => $order_id, 'commerce_payment' => $payment_id], ['absolute' => TRUE])->toString();
-    $success_url = Url::fromRoute('commerce_spectrocoin.success', ['commerce_order' => $order_id], ['absolute' => TRUE])->toString();
-    $failure_url = Url::fromRoute('commerce_spectrocoin.failure', ['commerce_order' => $order_id], ['absolute' => TRUE])->toString();
+    
+    // Force HTTPS in generated URLs.
+    $callback_url = Url::fromRoute('commerce_spectrocoin.callback', [
+      'commerce_order' => $order_id,
+      'commerce_payment' => $payment_id
+    ], ['absolute' => TRUE, 'https' => TRUE])->toString();
+    $success_url = Url::fromRoute('commerce_spectrocoin.success', [
+      'commerce_order' => $order_id
+    ], ['absolute' => TRUE, 'https' => TRUE])->toString();
+    $failure_url = Url::fromRoute('commerce_spectrocoin.failure', [
+      'commerce_order' => $order_id
+    ], ['absolute' => TRUE, 'https' => TRUE])->toString();
+    
+    \Drupal::logger('commerce_spectrocoin')->debug("Generated callback_url: $callback_url");
+    \Drupal::logger('commerce_spectrocoin')->debug("Generated success_url: $success_url");
+    \Drupal::logger('commerce_spectrocoin')->debug("Generated failure_url: $failure_url");
+    
     $locale = 'en';
     $createOrderRequest = new SpectroCoin_CreateOrderRequest(
       $order_id,
@@ -185,13 +176,12 @@ class SpectroCoin extends OffsitePaymentGatewayBase
       $locale
     );
     $createOrderResponse = $client->spectroCoinCreateOrder($createOrderRequest);
-
+    
     if ($createOrderResponse instanceof SpectroCoin_ApiError) {
       $payment->setState('failed');
       $payment->save();
     }
     return $createOrderResponse;
   }
-
   
 }
