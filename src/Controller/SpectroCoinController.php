@@ -69,24 +69,23 @@ class SpectroCoinController extends ControllerBase {
       $status = strtolower($order_callback->getStatus());
       \Drupal::logger('commerce_spectrocoin')->debug('Callback status: ' . $status);
       switch ($status) {
-        case 'new':
-          // Do nothing.
-          break;
-
         case 'pending':
           $order->set('state', 'pending');
           break;
 
         case 'expired':
           $order->set('state', 'expired');
+          $order->set('cart', 0);
           break;
 
         case 'failed':
           $order->set('state', 'canceled');
+          $order->set('cart', 0);
           break;
 
         case 'paid':
           $order->set('state', 'completed');
+          $order->set('cart', 0);
           break;
 
         default:

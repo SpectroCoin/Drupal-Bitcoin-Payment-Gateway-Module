@@ -121,16 +121,6 @@ class SpectroCoin extends OffsitePaymentGatewayBase {
     
     $payment->save();
     
-    // If the order is still in 'draft', update it to 'pending'
-    if ($order->getState()->value === 'draft') {
-      $order->set('state', 'pending');
-      $order->save();
-      \Drupal::logger('commerce_spectrocoin')->debug('Order ID ' . $order->id() . ' updated to state: ' . $order->getState()->value);
-    }
-    else {
-      \Drupal::logger('commerce_spectrocoin')->debug('Order ID ' . $order->id() . ' was already in state: ' . $order->getState()->value);
-    }
-    
     $configuration = $this->getConfiguration();
     $client = new SCMerchantClient(
       AUTH_URL,
@@ -151,17 +141,9 @@ class SpectroCoin extends OffsitePaymentGatewayBase {
       'commerce_order' => $order_id,
       'commerce_payment' => $payment_id
     ], ['absolute' => TRUE, 'https' => TRUE])->toString();
-    $success_url = Url::fromRoute('commerce_spectrocoin.success', [
-      'commerce_order' => $order_id
-    ], ['absolute' => TRUE, 'https' => TRUE])->toString();
-    $failure_url = Url::fromRoute('commerce_spectrocoin.failure', [
-      'commerce_order' => $order_id
-    ], ['absolute' => TRUE, 'https' => TRUE])->toString();
-    
-    \Drupal::logger('commerce_spectrocoin')->debug("Generated callback_url: $callback_url");
-    \Drupal::logger('commerce_spectrocoin')->debug("Generated success_url: $success_url");
-    \Drupal::logger('commerce_spectrocoin')->debug("Generated failure_url: $failure_url");
-    
+    $success_url = Url::fromRoute('commerce_checkout.complete', ['commerce_order' => $order_id], ['absolute' => TRUE, 'https' => TRUE])->toString();
+    $failure_url = Url::fromRoute('commerce_checkout.cancel', ['commerce_order' => $order_id], ['absolute' => TRUE, 'https' => TRUE])->toString();
+
     $locale = 'en';
     $createOrderRequest = new SpectroCoin_CreateOrderRequest(
       $order_id,

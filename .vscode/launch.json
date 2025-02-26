@@ -11,7 +11,7 @@
       "request": "launch",
       "port": 9003,
       "pathMappings": {
-        "/opt/drupal/web": "/home/rokrei@sf.lan/Documents/dev/cms/drupal"
+        "/opt/drupal/web": "/home/rokrei/Documents/dev/cms/drupal/drupal/web"
       }
     },
     {
