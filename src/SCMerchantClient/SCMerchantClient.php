@@ -78,7 +78,7 @@ class SCMerchantClient
 		}
 
 		$payload = array(
-			"orderId" => $request->getOrderId() . rand(1, 10),
+			"orderId" => $request->getOrderId(),
 			"projectId" => $this->project_id,
 			"description" => $request->getDescription(),
 			"payAmount" => $request->getPayAmount(),

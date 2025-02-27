@@ -4,15 +4,7 @@ namespace Drupal\commerce_spectrocoin\Plugin\Commerce\PaymentGateway;
 use Drupal\commerce_payment\Entity\PaymentInterface;
 use Drupal\commerce_payment\Plugin\Commerce\PaymentGateway\OffsitePaymentGatewayBase;
 use Drupal\Core\Form\FormStateInterface;
-use Symfony\Component\HttpFoundation\Request;
-use Drupal\commerce_order\Entity\OrderInterface;
-use Drupal\commerce_payment\Exception\PaymentGatewayException;
-use Drupal\Component\Datetime\TimeInterface;
-use Drupal\commerce_payment\PaymentMethodTypeManager;
-use Drupal\commerce_payment\PaymentTypeManager;
-use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Url;
-
 use Drupal\commerce_spectrocoin\SCMerchantClient\messages\SpectroCoin_CreateOrderRequest;
 use Drupal\commerce_spectrocoin\SCMerchantClient\data\SpectroCoin_ApiError;
 use Drupal\commerce_spectrocoin\SCMerchantClient\SCMerchantClient;
@@ -100,15 +92,10 @@ class SpectroCoin extends OffsitePaymentGatewayBase {
    */
   public function createSpectroCoinInvoice(PaymentInterface $payment, array $extra) {
     $order = $payment->getOrder();
-    
-    \Drupal::logger('commerce_spectrocoin')->debug('Before updating, order ID ' . $order->id() . ' is in state: ' . $order->getState()->value);
-    
-    /** @var \Drupal\commerce_payment\PaymentStorageInterface $paymentStorage */
+
     $paymentStorage = $this->entityTypeManager->getStorage('commerce_payment');
-    
     $paymentAmount = $payment->getAmount();
-    
-    // Create a new Payment entity.
+
     $payment = $paymentStorage->create([
       'state' => 'Open',
       'amount' => $payment->getAmount(),
@@ -118,53 +105,30 @@ class SpectroCoin extends OffsitePaymentGatewayBase {
       'test' => $this->getMode() == 'test',
       'authorized' => $this->time->getRequestTime(),
     ]);
-    
     $payment->save();
-    
-    // If the order is still in 'draft', update it to 'pending'
-    if ($order->getState()->value === 'draft') {
-      $order->set('state', 'pending');
-      $order->save();
-      \Drupal::logger('commerce_spectrocoin')->debug('Order ID ' . $order->id() . ' updated to state: ' . $order->getState()->value);
-    }
-    else {
-      \Drupal::logger('commerce_spectrocoin')->debug('Order ID ' . $order->id() . ' was already in state: ' . $order->getState()->value);
-    }
-    
-    $configuration = $this->getConfiguration();
-    $client = new SCMerchantClient(
-      AUTH_URL,
-      API_URL,
-      $configuration['project_id'],
-      $configuration['client_id'],
-      $configuration['client_secret']
-    );
+
     $payment_id = $payment->id();
     $order_id = $order->id();
+    $combined_order_id = $order_id . '-' . $payment_id;
+    $base_url = \Drupal::request()->getSchemeAndHttpHost();
     $order_description = "Payment for order {$order_id}, payment {$payment_id}";
     $receive_amount = $paymentAmount->getNumber();
     $receive_currency_code = $paymentAmount->getCurrencyCode();
     $pay_currency_code = 'BTC';
     
-    // Force HTTPS in generated URLs.
     $callback_url = Url::fromRoute('commerce_spectrocoin.callback', [
       'commerce_order' => $order_id,
       'commerce_payment' => $payment_id
     ], ['absolute' => TRUE, 'https' => TRUE])->toString();
-    $success_url = Url::fromRoute('commerce_spectrocoin.success', [
-      'commerce_order' => $order_id
-    ], ['absolute' => TRUE, 'https' => TRUE])->toString();
+
+    $success_url = $base_url . '/' . 'checkout/' . $order_id . '/complete';
     $failure_url = Url::fromRoute('commerce_spectrocoin.failure', [
       'commerce_order' => $order_id
     ], ['absolute' => TRUE, 'https' => TRUE])->toString();
     
-    \Drupal::logger('commerce_spectrocoin')->debug("Generated callback_url: $callback_url");
-    \Drupal::logger('commerce_spectrocoin')->debug("Generated success_url: $success_url");
-    \Drupal::logger('commerce_spectrocoin')->debug("Generated failure_url: $failure_url");
-    
     $locale = 'en';
     $createOrderRequest = new SpectroCoin_CreateOrderRequest(
-      $order_id,
+      $combined_order_id,
       $order_description,
       $receive_amount,
       $receive_currency_code,
@@ -175,13 +139,20 @@ class SpectroCoin extends OffsitePaymentGatewayBase {
       $failure_url,
       $locale
     );
-    $createOrderResponse = $client->spectroCoinCreateOrder($createOrderRequest);
+    $createOrderResponse = $client = (new SCMerchantClient(
+      AUTH_URL,
+      API_URL,
+      $this->configuration['project_id'],
+      $this->configuration['client_id'],
+      $this->configuration['client_secret']
+    ))->spectroCoinCreateOrder($createOrderRequest);
     
     if ($createOrderResponse instanceof SpectroCoin_ApiError) {
       $payment->setState('failed');
       $payment->save();
     }
+    $order->set('cart', 0);
+    $order->save();
     return $createOrderResponse;
   }
-  
 }
