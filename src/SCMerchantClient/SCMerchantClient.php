@@ -18,9 +18,6 @@ use Drupal\commerce_spectrocoin\SCMerchantClient\messages\SpectroCoin_CreateOrde
 use Drupal\commerce_spectrocoin\SCMerchantClient\messages\SpectroCoin_CreateOrderResponse;
 use Drupal\commerce_spectrocoin\SCMerchantClient\components\SpectroCoin_Utilities;
 
-require_once __DIR__ . '/../../vendor/autoload.php';
-
-
 class SCMerchantClient
 {
 
