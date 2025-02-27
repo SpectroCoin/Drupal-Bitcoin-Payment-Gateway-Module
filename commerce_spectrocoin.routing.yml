@@ -1,0 +1,31 @@
+# commerce_spectrocoin.routing.yml
+
+commerce_spectrocoin.callback:
+  path: "/commerce-spectrocoin/callback"
+  defaults:
+    _controller: 'Drupal\commerce_spectrocoin\Controller\SpectroCoinController::callback'
+    _title: 'SpectroCoin Callback'
+  requirements:
+    _access: 'TRUE'
+  methods: [POST]
+  options:
+    # Disable CSRF checks for an external POST request.
+    _csrf_protection: FALSE
+
+commerce_spectrocoin.success:
+  path: "/commerce-spectrocoin/success"
+  defaults:
+    _controller: 'Drupal\commerce_spectrocoin\Controller\SpectroCoinController::success'
+    _title: 'SpectroCoin Success'
+  requirements:
+    _access: 'TRUE'
+  methods: [GET]
+
+commerce_spectrocoin.failure:
+  path: "/commerce-spectrocoin/failure"
+  defaults:
+    _controller: 'Drupal\commerce_spectrocoin\Controller\SpectroCoinController::failure'
+    _title: 'SpectroCoin Failure'
+  requirements:
+    _access: 'TRUE'
+  methods: [GET]
