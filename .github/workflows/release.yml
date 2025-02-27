@@ -21,6 +21,15 @@ jobs:
         run: |
           git config --global user.email "actions@github.com"
           git config --global user.name "GitHub Actions"
+
+      - name: Install PHP and Composer
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y php-cli php-xml composer
+
+      - name: Install dependencies via Composer
+        run: composer install --no-dev --optimize-autoloader
+
       - name: Install GitHub CLI
         run: sudo apt-get install gh
 
@@ -32,7 +41,7 @@ jobs:
           # Fetch the latest merged PR title and body using GitHub CLI
           PR_TITLE=$(gh pr list --state merged --limit 1 --json title --jq '.[0].title')
           PR_BODY=$(gh pr list --state merged --limit 1 --json body --jq '.[0].body')
-          TAG_NAME=$(echo "$PR_TITLE" | sed 's/ /_/g') # Replace spaces with underscores in the tag name for consistency
+          TAG_NAME=$(echo "$PR_TITLE" | sed 's/ /_/g') # Replace spaces with underscores for tag consistency
           # Check if the tag already exists
           if git rev-parse "$TAG_NAME" >/dev/null 2>&1; then
             echo "Tag '$TAG_NAME' already exists. Exiting workflow."
@@ -46,9 +55,9 @@ jobs:
             # Create the tag
             git tag "$TAG_NAME"
             git push origin "$TAG_NAME"
-            # Store the tag name for use in the next steps
             echo "TAG_NAME=$TAG_NAME" >> $GITHUB_ENV
           fi
+
       - name: Create Release
         if: env.TAG_EXISTS == 'false'
         id: create_release
@@ -68,12 +77,14 @@ jobs:
           MODULE_NAME="commerce_spectrocoin"
           TAG_NAME=${{ env.TAG_NAME }}
           mkdir -p build/$MODULE_NAME
+          # Ensure that the vendor directory (and all other needed files) are included
           rsync -av --exclude='build' --exclude='.git*' --exclude='.github*' --exclude='.vscode*' --exclude='*.md' --exclude='.gitignore' ./ build/$MODULE_NAME
           cd build
           ZIP_FILE_NAME="${GITHUB_WORKSPACE}/${MODULE_NAME}_${TAG_NAME}.zip"
           zip -r "$ZIP_FILE_NAME" "$MODULE_NAME"
           echo "ZIP_FILE_NAME=$ZIP_FILE_NAME" >> $GITHUB_ENV
           echo "MODULE_NAME=$MODULE_NAME" >> $GITHUB_ENV
+
       - name: Upload release asset
         if: env.TAG_EXISTS == 'false'
         uses: actions/upload-release-asset@v1
