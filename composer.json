@@ -1,5 +1,5 @@
 {
-  "name": "testspectrocoin/testdrupal-merchant",
+  "name": "spectrocointest/drupal-merchant-test",
   "description": "SpectroCoin cryptocurrency payment gateway for Drupal",
   "type": "drupal-module",
   "version": "1.1.0",
