@@ -86,19 +86,19 @@ class SpectroCoinController extends ControllerBase
 
       $statusEnum = SpectroCoin_OrderStatusEnum::normalize($raw_status);
       switch ($statusEnum) {
-        case OrderStatus::NEW:
+        case SpectroCoin_OrderStatusEnum::NEW:
           break;
-        case OrderStatus::PENDING:
+        case SpectroCoin_OrderStatusEnum::PENDING:
           break;
-        case OrderStatus::PAID:
+        case SpectroCoin_OrderStatusEnum::PAID:
           $order->set('state', 'completed');
           $order->set('cart', 0);
           break;
-        case OrderStatus::FAILED:
+        case SpectroCoin_OrderStatusEnum::FAILED:
           $order->set('state', 'canceled');
           $order->set('cart', 0);
           break;
-        case OrderStatus::EXPIRED:
+        case SpectroCoin_OrderStatusEnum::EXPIRED:
           $order->set('state', 'expired');
           $order->set('cart', 0);
           break;
