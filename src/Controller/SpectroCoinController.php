@@ -39,25 +39,34 @@ class SpectroCoinController extends ControllerBase
     try {
       $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
       if (stripos($contentType, 'application/json') !== false) {
-        // if new callback
+        // 1) parse the JSON payload
         $order_callback = $this->initCallbackFromJson();
         if (! $order_callback) {
           throw new InvalidArgumentException('Invalid JSON callback payload');
         }
+
+        $gateways = \Drupal::entityTypeManager()
+          ->getStorage('commerce_payment_gateway')
+          ->loadByProperties(['plugin' => 'spectrocoin']);
+        $gateway_entity = reset($gateways);
+        if (! $gateway_entity) {
+          throw new \RuntimeException('SpectroCoin gateway not configured.');
+        }
+        $plugin = $gateway_entity->getPlugin();
+        $cfg = $plugin->getConfiguration();
+
         $sc_merchant_client = new SCMerchantClient(
-          $this->configuration['project_id'],
-          $this->configuration['client_id'],
-          $this->configuration['client_secret']
+          $cfg['project_id'],
+          $cfg['client_id'],
+          $cfg['client_secret']
         );
 
-        $order_data = $sc_merchant_client->getOrderById($order_callback->getUuid());
-
-        if (! is_array($order_data) || empty($order_data['orderId']) || empty($order_data['status'])) {
+        $sc_order = $sc_merchant_client->getOrderById($order_callback->getUuid());
+        if (empty($sc_order['orderId']) || empty($sc_order['status'])) {
           throw new InvalidArgumentException('Malformed order data from API');
         }
-
-        $raw_status = $order_data['status'];
-        $raw_order_id = $order_data['orderId'];
+        $raw_status    = $sc_order['status'];
+        $raw_order_id  = $sc_order['orderId'];
       } else {
         // if legacy callback
         $order_callback = $this->initCallbackFromPost();
@@ -109,7 +118,7 @@ class SpectroCoinController extends ControllerBase
       }
       $order->save();
 
-      if ($statusEnum === SpectroCoin_OrderStatusEnum::PAID) { 
+      if ($statusEnum === SpectroCoin_OrderStatusEnum::PAID) {
         $payment_storage = \Drupal::entityTypeManager()->getStorage('commerce_payment');
         $payment = $payment_storage->load($payment_id);
         if ($payment) {
