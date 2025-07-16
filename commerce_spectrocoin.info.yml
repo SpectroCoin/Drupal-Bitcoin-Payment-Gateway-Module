@@ -7,6 +7,6 @@ dependencies:
   - commerce:commerce_checkout
   - commerce:commerce_payment
 
-version: "1.0.0"
+version: "1.1.0"
 project: "commerce_spectrocoin"
 datestamp: 1684701392

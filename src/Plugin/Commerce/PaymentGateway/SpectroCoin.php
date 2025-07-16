@@ -9,8 +9,6 @@ use Drupal\commerce_spectrocoin\SCMerchantClient\messages\SpectroCoin_CreateOrde
 use Drupal\commerce_spectrocoin\SCMerchantClient\data\SpectroCoin_ApiError;
 use Drupal\commerce_spectrocoin\SCMerchantClient\SCMerchantClient;
 
-define('API_URL', 'https://spectrocoin.com/api/public');
-define('AUTH_URL', 'https://spectrocoin.com/api/public/oauth/token');
 
 /**
  * Provides the SpectroCoin payment gateway.
@@ -126,7 +124,6 @@ class SpectroCoin extends OffsitePaymentGatewayBase {
       'commerce_order' => $order_id
     ], ['absolute' => TRUE, 'https' => TRUE])->toString();
     
-    $locale = 'en';
     $createOrderRequest = new SpectroCoin_CreateOrderRequest(
       $combined_order_id,
       $order_description,
@@ -136,12 +133,9 @@ class SpectroCoin extends OffsitePaymentGatewayBase {
       $pay_currency_code,
       $callback_url,
       $success_url,
-      $failure_url,
-      $locale
+      $failure_url
     );
     $createOrderResponse = $client = (new SCMerchantClient(
-      AUTH_URL,
-      API_URL,
       $this->configuration['project_id'],
       $this->configuration['client_id'],
       $this->configuration['client_secret']
