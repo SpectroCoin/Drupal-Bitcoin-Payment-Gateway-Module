@@ -81,7 +81,7 @@ Order callbacks in the SpectroCoin plugin allow your WordPress site to automatic
 
 ## Changelog
 
-### 1.1.0 ():
+### 1.1.0 (16/07/2025):
 
 _Added_ support for new JSON and old URL-encoded form data callbacks format. New callbacks will be automatically enabled with new SpectroCoin merchant projects created. With old projects, old callback format will be used. In the future versions old callback format will be removed.
 
