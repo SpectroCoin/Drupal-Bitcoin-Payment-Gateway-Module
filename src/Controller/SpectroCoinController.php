@@ -67,11 +67,17 @@ class SpectroCoinController extends ControllerBase
         }
         $raw_status    = $sc_order['status'];
         $raw_order_id  = $sc_order['orderId'];
+        // MerchantOrderDTO reports the settlement side as
+        // receiveAmount / receiveCurrencyCode.
+        $receive_amount = $sc_order['receiveAmount'] ?? NULL;
+        $receive_currency = $sc_order['receiveCurrencyCode'] ?? NULL;
       } else {
         // if legacy callback
         $order_callback = $this->initCallbackFromPost();
         $raw_status = $order_callback->getStatus();
         $raw_order_id = $order_callback->getOrderId();
+        $receive_amount = $order_callback->getReceiveAmount();
+        $receive_currency = $order_callback->getReceiveCurrency();
       }
 
       list($order_id, $payment_id) = explode('-', $raw_order_id);
@@ -91,6 +97,37 @@ class SpectroCoinController extends ControllerBase
         \Drupal::logger('commerce_spectrocoin')
           ->error('SpectroCoin Error: Order not found - Order ID: ' . $order_id);
         return new Response('Order not found', 404);
+      }
+
+      // The order was created with receiveAmount / receiveCurrencyCode taken from
+      // the order total, so they must still match. A missing field means an
+      // unexpected payload shape rather than a mismatch, so it is logged and the
+      // comparison is skipped.
+      if ($receive_currency === NULL || $receive_amount === NULL) {
+        \Drupal::logger('commerce_spectrocoin')
+          ->warning('No settlement amount to compare for order @id', ['@id' => $order_id]);
+      }
+      else {
+        $order_total = $order->getTotalPrice();
+        if ($order_total) {
+          if (strtoupper((string) $receive_currency) !== strtoupper($order_total->getCurrencyCode())) {
+            \Drupal::logger('commerce_spectrocoin')
+              ->error('SpectroCoin Error: currency does not match order @id', ['@id' => $order_id]);
+            return new Response('Currency does not match the order', 400);
+          }
+          // Reported for now rather than rejected: it is not yet confirmed
+          // whether the settled amount is gross or net of fees, and rejecting a
+          // legitimate settlement would leave the order unpaid. Promote to a
+          // rejection once confirmed.
+          if ((float) $receive_amount + 0.00000001 < (float) $order_total->getNumber()) {
+            \Drupal::logger('commerce_spectrocoin')
+              ->warning('Amount @amount does not cover order @id total @total', [
+                '@amount' => $receive_amount,
+                '@id' => $order_id,
+                '@total' => $order_total->getNumber(),
+              ]);
+          }
+        }
       }
 
       $statusEnum = SpectroCoin_OrderStatusEnum::normalize($raw_status);
