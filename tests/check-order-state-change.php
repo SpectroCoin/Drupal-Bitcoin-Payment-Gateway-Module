@@ -12,7 +12,7 @@
  * Standalone by design: the module ships no PHPUnit setup, and a Drupal
  * bootstrap is not needed to observe which methods write.
  *
- * Run:  php tests/OrderStateChangeTest.php
+ * Run:  php tests/check-order-state-change.php
  */
 
 // ---------------------------------------------------------------------------
