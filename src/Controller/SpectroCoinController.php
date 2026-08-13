@@ -131,6 +131,18 @@ class SpectroCoinController extends ControllerBase
       }
 
       $statusEnum = SpectroCoin_OrderStatusEnum::normalize($raw_status);
+
+      if ($statusEnum->isInformational()) {
+        \Drupal::logger('commerce_spectrocoin')
+          ->warning('SpectroCoin reported @status for order @id; no state change applied.', [
+            '@status' => $statusEnum->value,
+            '@id' => $order_id,
+          ]);
+        $response = new Response('*ok*', 200);
+        $response->headers->set('Content-Type', 'text/plain');
+        return $response;
+      }
+
       switch ($statusEnum) {
         case SpectroCoin_OrderStatusEnum::NEW:
           break;
@@ -142,6 +154,8 @@ class SpectroCoinController extends ControllerBase
           break;
         case SpectroCoin_OrderStatusEnum::FAILED:
         case SpectroCoin_OrderStatusEnum::CANCELLED:
+        case SpectroCoin_OrderStatusEnum::REJECTED:
+        case SpectroCoin_OrderStatusEnum::INVALID_PAYMENT:
           $order->set('state', 'canceled');
           $order->set('cart', 0);
           break;
