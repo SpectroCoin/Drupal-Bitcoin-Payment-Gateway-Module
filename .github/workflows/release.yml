@@ -68,7 +68,7 @@ jobs:
           MODULE_NAME="commerce_spectrocoin"
           TAG_NAME=${{ env.TAG_NAME }}
           mkdir -p build/$MODULE_NAME
-          rsync -av --exclude='build' --exclude='.git*' --exclude='.github*' --exclude='.vscode*' --exclude='*.md' --exclude='.gitignore' ./ build/$MODULE_NAME
+          rsync -av --exclude='build' --exclude='.git*' --exclude='.github*' --exclude='.vscode*' --exclude='tests' --exclude='*.md' --exclude='.gitignore' ./ build/$MODULE_NAME
           cd build
           ZIP_FILE_NAME="${GITHUB_WORKSPACE}/${MODULE_NAME}_${TAG_NAME}.zip"
           zip -r "$ZIP_FILE_NAME" "$MODULE_NAME"
