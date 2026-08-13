@@ -141,6 +141,7 @@ class SpectroCoinController extends ControllerBase
           $order->set('cart', 0);
           break;
         case SpectroCoin_OrderStatusEnum::FAILED:
+        case SpectroCoin_OrderStatusEnum::CANCELLED:
           $order->set('state', 'canceled');
           $order->set('cart', 0);
           break;

@@ -355,6 +355,24 @@ namespace {
             'callback() must still re-fetch authoritative status from the API');
     });
 
+    $t->run('callback() cancels on CANCELLED as well as FAILED', function ($t) use ($source) {
+        $body = method_body($source, 'public function callback()');
+        $t->assertTrue(strpos($body, 'SpectroCoin_OrderStatusEnum::CANCELLED') !== false,
+            'callback() must handle the CANCELLED status the API sends when an order is cancelled');
+    });
+
+    $t->run('the status enum accepts every status the callback switch handles', function ($t) {
+        require_once __DIR__ . '/../src/SCMerchantClient/data/SpectroCoin_OrderStatusEnum.php';
+        $enum = \Drupal\commerce_spectrocoin\SCMerchantClient\data\SpectroCoin_OrderStatusEnum::class;
+        foreach (['NEW', 'PENDING', 'PAID', 'FAILED', 'EXPIRED', 'CANCELLED'] as $status) {
+            $t->assertSame($status, $enum::normalize($status)->value,
+                "normalize() must accept the {$status} status");
+        }
+        // Legacy numeric form, as sent by old merchant projects.
+        $t->assertSame('CANCELLED', $enum::normalize(13)->value,
+            'normalize() must map legacy code 13 to CANCELLED');
+    });
+
     $t->run('callback route is still POST-only', function ($t) use ($routing) {
         $t->assertTrue(strpos($routing, 'methods: [POST]') !== false,
             'the callback route must stay POST-only');
