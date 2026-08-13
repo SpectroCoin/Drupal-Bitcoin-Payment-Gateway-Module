@@ -141,6 +141,7 @@ class SpectroCoinController extends ControllerBase
           $order->set('cart', 0);
           break;
         case SpectroCoin_OrderStatusEnum::FAILED:
+        case SpectroCoin_OrderStatusEnum::CANCELLED:
           $order->set('state', 'canceled');
           $order->set('cart', 0);
           break;
@@ -182,36 +183,38 @@ class SpectroCoinController extends ControllerBase
   }
 
 
+  /**
+   * Landing page for the payer after a successful payment.
+   *
+   * Presentation only — see ::failure() for why these two never write.
+   * Access to the checkout completion page is enforced by Commerce's own route,
+   * so the order is not loaded here: doing so only revealed whether a given
+   * order id exists.
+   */
   public function success()
   {
     $order_id = \Drupal::request()->query->get('order_id');
-    if ($order_id) {
-      $order = Order::load((int) $order_id);
-      if ($order) {
-        $base_url = \Drupal::request()->getSchemeAndHttpHost();
-        $success_url = $base_url . '/' . 'checkout/' . $order->id() . '/complete';
-        return new RedirectResponse($success_url);
-      }
+    if (is_numeric($order_id) && (int) $order_id > 0) {
+      $base_url = \Drupal::request()->getSchemeAndHttpHost();
+      return new RedirectResponse($base_url . '/checkout/' . (int) $order_id . '/complete');
     }
     return new RedirectResponse('/');
   }
 
+  /**
+   * Landing page for the payer after a failed or abandoned payment.
+   *
+   * Presentation only. Order state is owned exclusively by ::callback(), which
+   * proves the request came from SpectroCoin — the JSON path re-fetches the
+   * authoritative status via getOrderById(), and the legacy POST path verifies
+   * the payload signature. A payer-facing redirect target carries no such proof
+   * and is reachable by anyone, so it must never mutate an order.
+   *
+   * FAILED and EXPIRED both arrive on that authenticated channel and are
+   * already handled there, so nothing is lost by not cancelling here.
+   */
   public function failure()
   {
-    $order_id = \Drupal::request()->query->get('order_id');
-    if ($order_id) {
-      $order = Order::load((int) $order_id);
-      if ($order) {
-        $order->set('state', 'canceled');
-        $order->save();
-      } else {
-        \Drupal::logger('commerce_spectrocoin')
-          ->error('SpectroCoin Error: Invalid Order ID in failure callback.');
-      }
-    } else {
-      \Drupal::logger('commerce_spectrocoin')
-        ->error('SpectroCoin Error: Order ID is not available in failure callback.');
-    }
     $this->messenger()->addError($this->t('Your order was canceled. Please try again.'));
     return new RedirectResponse('/cart');
   }
