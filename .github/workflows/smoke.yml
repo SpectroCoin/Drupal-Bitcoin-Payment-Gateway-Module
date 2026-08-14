@@ -1,0 +1,26 @@
+name: Smoke
+
+# Installs the packaged plugin into a real CMS and checks it runs. Separate from
+# checks.yml: this starts containers and takes minutes, so it runs on
+# release-bound changes rather than every push.
+on:
+  pull_request:
+    branches:
+      - master
+  workflow_dispatch:
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run the smoke test
+        run: ./tests/e2e/smoke.sh
+
+      - name: Container logs on failure
+        if: failure()
+        run: cd tests/e2e && docker compose logs --tail=120 || true
