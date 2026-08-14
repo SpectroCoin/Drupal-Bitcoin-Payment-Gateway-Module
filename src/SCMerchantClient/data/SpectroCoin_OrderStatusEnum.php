@@ -13,6 +13,9 @@ enum SpectroCoin_OrderStatusEnum: string
     case PARTIAL_PAYMENT             = 'PARTIAL_PAYMENT';
     case UNDERPAID                   = 'UNDERPAID';
     case CANCELLED                   = 'CANCELLED';
+    case TEST                        = 'TEST';
+    case TEST_PAID                   = 'TEST_PAID';
+    case TEST_EXPIRED                = 'TEST_EXPIRED';
     case INVALID_PAYMENT             = 'INVALID_PAYMENT';
     case PROCESSING_REFUND           = 'PROCESSING_REFUND';
     case REFUNDED                    = 'REFUNDED';
@@ -35,6 +38,9 @@ enum SpectroCoin_OrderStatusEnum: string
             11 => self::PARTIAL_PAYMENT,
             12 => self::UNDERPAID,
             13 => self::CANCELLED,
+             6 => self::TEST,
+            15 => self::TEST_PAID,
+            16 => self::TEST_EXPIRED,
             14 => self::INVALID_PAYMENT,
             17 => self::PROCESSING_REFUND,
             18 => self::REFUNDED,
@@ -64,6 +70,9 @@ enum SpectroCoin_OrderStatusEnum: string
             'PARTIAL_PAYMENT'             => self::PARTIAL_PAYMENT,
             'UNDERPAID'                   => self::UNDERPAID,
             'CANCELLED'                   => self::CANCELLED,
+            'TEST'                        => self::TEST,
+            'TEST_PAID'                   => self::TEST_PAID,
+            'TEST_EXPIRED'                => self::TEST_EXPIRED,
             'INVALID_PAYMENT'             => self::INVALID_PAYMENT,
             'PROCESSING_REFUND'           => self::PROCESSING_REFUND,
             'REFUNDED'                    => self::REFUNDED,
@@ -100,7 +109,10 @@ enum SpectroCoin_OrderStatusEnum: string
             self::PENDING_LATE_CRYPTO_PAYMENT,
             self::PROCESSING_REFUND,
             self::REFUNDED,
-            self::REJECTED_REFUND => true,
+            self::REJECTED_REFUND,
+            self::TEST,
+            self::TEST_PAID,
+            self::TEST_EXPIRED => true,
             default => false,
         };
     }

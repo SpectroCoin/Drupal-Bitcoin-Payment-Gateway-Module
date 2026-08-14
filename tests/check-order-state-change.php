@@ -372,11 +372,13 @@ namespace {
             'CANCELLED' => 13, 'INVALID_PAYMENT' => 14, 'PROCESSING_REFUND' => 17,
             'REFUNDED' => 18, 'REJECTED_REFUND' => 19,
             'PENDING_LATE_CRYPTO_PAYMENT' => 20, 'REJECTED' => 21,
+            'TEST' => 6, 'TEST_PAID' => 15, 'TEST_EXPIRED' => 16,
         ];
         $cancellations = ['FAILED', 'CANCELLED', 'REJECTED', 'INVALID_PAYMENT'];
         $informational = ['PARTIAL_PAYMENT', 'UNDERPAID', 'LATE_CRYPTO_PAYMENT',
                           'PENDING_LATE_CRYPTO_PAYMENT', 'PROCESSING_REFUND',
-                          'REFUNDED', 'REJECTED_REFUND'];
+                          'REFUNDED', 'REJECTED_REFUND',
+                          'TEST', 'TEST_PAID', 'TEST_EXPIRED'];
 
         foreach ($wire as $name => $code) {
             $t->assertSame($name, $enum::normalize($name)->value,
