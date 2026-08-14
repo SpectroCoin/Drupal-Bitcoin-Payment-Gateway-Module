@@ -1,0 +1,57 @@
+# Tier 2: a real Drupal + Drupal Commerce, and a stand-in SpectroCoin API that
+# answers as spectrocoin.com inside this network.
+#
+# That network alias is the point of the design: the module reaches the stub
+# through its own shipped Config URLs, over real TLS, with no test-only edit to
+# the code under test.
+services:
+  db:
+    image: mariadb:11
+    environment:
+      MARIADB_ROOT_PASSWORD: root
+      MARIADB_DATABASE: drupal
+    healthcheck:
+      # Asserts the DATABASE exists, not merely that the server answers.
+      test: ["CMD-SHELL", "mariadb -uroot -proot -e 'USE drupal' || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 60
+
+  spectrocoin:
+    build:
+      context: ./stub
+    networks:
+      default:
+        aliases:
+          - spectrocoin.com
+    volumes:
+      - ./.certs:/certs:ro
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "-o", "/dev/null", "http://localhost/__test/requests"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  drupal:
+    build:
+      context: .
+    depends_on:
+      db:
+        condition: service_healthy
+      spectrocoin:
+        condition: service_healthy
+    networks:
+      default:
+        # The module rejects a callbackUrl whose host has no dot, and that URL
+        # is built from the site host - so the site cannot be "localhost".
+        aliases:
+          - shop.test
+    volumes:
+      - ./.certs:/certs:ro
+    ports:
+      - "8089:80"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS -o /dev/null http://localhost/core/install.php || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 60
