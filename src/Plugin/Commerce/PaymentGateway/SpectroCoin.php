@@ -124,13 +124,16 @@ class SpectroCoin extends OffsitePaymentGatewayBase {
       'commerce_order' => $order_id
     ], ['absolute' => TRUE, 'https' => TRUE])->toString();
     
+    // The settlement side is what the merchant is owed: the order total, in the
+    // shop's currency. It belongs in receiveAmount / receiveCurrencyCode, which
+    // is also what the callback compares against the order before settling it.
     $createOrderRequest = new SpectroCoin_CreateOrderRequest(
       $combined_order_id,
       $order_description,
-      $receive_amount,
-      $receive_currency_code,
       null,
       $pay_currency_code,
+      $receive_amount,
+      $receive_currency_code,
       $callback_url,
       $success_url,
       $failure_url

@@ -1,2 +1,2 @@
 .vscode
-vendor/
+vendor//tests/e2e/tier2/.certs

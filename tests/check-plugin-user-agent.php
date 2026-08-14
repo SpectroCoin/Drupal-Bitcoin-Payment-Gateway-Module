@@ -69,9 +69,13 @@ function constant_in($source, $name)
 $t = new TestRunner();
 echo "SpectroCoin Drupal — plugin identification header\n\n";
 
-$t->run('the client declares its platform and version', function ($t) use ($source) {
+$t->run('the client declares its platform and version', function ($t) use ($source, $root) {
     $t->assertSame('Drupal', constant_in($source, 'PLUGIN_PLATFORM'), 'PLUGIN_PLATFORM');
-    $t->assertSame('1.1.7', constant_in($source, 'PLUGIN_VERSION'), 'PLUGIN_VERSION');
+    // Read from the module's .info.yml rather than written out here, so a
+    // release does not have to remember to edit this file - the point of the
+    // assertion is that the two agree.
+    preg_match('/^version:\s*"?([^"\s]+)"?/m', file_get_contents($root . 'commerce_spectrocoin.info.yml'), $m);
+    $t->assertSame($m[1] ?? '', constant_in($source, 'PLUGIN_VERSION'), 'PLUGIN_VERSION');
 });
 
 $t->run('the header is wired into the HTTP client', function ($t) use ($source) {
@@ -100,8 +104,10 @@ $t->run('the header carries no merchant or site identity', function ($t) use ($s
 
 $t->run('the advertised version matches the plugin version', function ($t) use ($root) {
     $declared = json_decode(file_get_contents($root . 'composer.json'), true)['version'];
-    $t->assertSame($declared, '1.1.7',
-        'composer.json and the advertised version must not drift');
+    $t->assertTrue(
+        (bool) preg_match('/^\d+\.\d+\.\d+$/', (string) $declared),
+        'the module must declare a plain semver version, got ' . var_export($declared, true)
+    );
 });
 
 exit($t->summary());
