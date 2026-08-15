@@ -1,0 +1,80 @@
+# Tier 3: a real shopper journey in a real Drupal Commerce checkout.
+#
+# Tier 2 called createSpectroCoinInvoice() directly, which proves the payload
+# and the callback contract but never that a shopper can reach the gateway.
+# The gateway is an off-site Commerce payment plugin selected from a checkout
+# pane, so "is it offered, and does selecting it redirect the shopper" is a
+# genuinely different question from "does the gateway work" - answerable only
+# by walking a shopper through checkout in a real browser.
+#
+# The SpectroCoin API is stood in for by a stub answering as spectrocoin.com
+# inside the compose network, over TLS signed by a CA generated here. No
+# credentials, no live orders, no calls to the real API - and because the alias
+# does the redirection, the module's own Config URLs are exercised as they ship.
+#
+# Named explicitly: several sibling plugin repos keep their tier3 fixtures at
+# the same relative path, and Compose derives its project name from the
+# directory basename by default - without this, a concurrent run elsewhere
+# collides with this one on container and network names.
+name: drupal-commerce-tier3
+services:
+  db:
+    image: mariadb:11
+    environment:
+      MARIADB_ROOT_PASSWORD: root
+      MARIADB_DATABASE: drupal
+    healthcheck:
+      test: ["CMD-SHELL", "mariadb -uroot -proot -e 'USE drupal' || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 60
+
+  spectrocoin:
+    build:
+      context: ./stub
+    networks:
+      default:
+        aliases:
+          - spectrocoin.com
+    volumes:
+      - ./.certs:/certs:ro
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "-o", "/dev/null", "http://localhost/__test/requests"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  drupal:
+    build:
+      context: ../tier2
+    depends_on:
+      db:
+        condition: service_healthy
+      spectrocoin:
+        condition: service_healthy
+    networks:
+      default:
+        # The module rejects a callbackUrl whose host has no dot, and that URL
+        # is built from the site host - so the site cannot be "localhost".
+        aliases:
+          - shop.test
+    volumes:
+      - ./.certs:/certs:ro
+    ports:
+      - "8095:80"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS -o /dev/null http://localhost/core/install.php || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 60
+
+  # Carries its own browsers; nothing is downloaded at run time.
+  playwright:
+    image: mcr.microsoft.com/playwright:v1.50.0-noble
+    depends_on:
+      drupal:
+        condition: service_healthy
+    volumes:
+      - ./:/work
+    working_dir: /work
+    entrypoint: ["tail", "-f", "/dev/null"]

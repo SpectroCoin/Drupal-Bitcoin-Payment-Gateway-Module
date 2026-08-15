@@ -1,0 +1,40 @@
+name: Checkout journey
+
+# Buys a product in a real browser through a real Drupal Commerce checkout:
+# add to cart, fill in billing details, pick SpectroCoin, place the order,
+# follow the redirect.
+#
+# This is the layer tier 2 cannot reach. Tier 2 calls createSpectroCoinInvoice()
+# directly, so it proves the gateway works but not that a shopper can ever
+# select it - SpectroCoin is an off-site Commerce payment gateway offered from
+# a checkout pane, and Commerce hides the payment-method radios outright when
+# only one gateway is configured.
+on:
+  pull_request:
+    branches:
+      - master
+  workflow_dispatch:
+
+jobs:
+  tier3:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run the checkout journey
+        run: ./tests/e2e/tier3/tier3.sh
+
+      - name: Screenshots of any failing step
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tier3-screenshots
+          path: tests/e2e/tier3/artifacts/
+          if-no-files-found: ignore
+
+      - name: Container logs on failure
+        if: failure()
+        run: cd tests/e2e/tier3 && docker compose logs --tail=150 || true
