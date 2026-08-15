@@ -99,6 +99,19 @@ dr composer --working-dir=/opt/drupal require drush/drush drupal/commerce -q --n
   && pass "drush and Drupal Commerce installed" \
   || { fail "composer failed:"; tail -6 "$WORK/composer.log" | sed 's/^/        /'; }
 
+# The healthcheck above already made one HTTP request against install.php
+# before Commerce existed, and the image's opcache-recommended.ini only
+# re-checks file mtimes every 60 seconds (opcache.revalidate_freq=60). Left
+# alone, Apache's workers keep serving that pre-Commerce autoloader map for up
+# to a minute - long enough, on a fast run, to still be live when the shopper
+# hits the product page, which then 500s on "Class CommerceGuys\Intl\...
+# CurrencyRepository not found" with its body suppressed, indistinguishable
+# from a page that simply has no add-to-cart form. A graceful restart forces
+# fresh workers with a clean opcache instead of waiting out the window.
+dr sh -c 'apache2ctl -k graceful' >/dev/null 2>&1 \
+  && pass "Apache restarted so the new Commerce autoloader is actually live" \
+  || fail "could not restart Apache after composer require"
+
 drush site:install standard --yes --account-pass=admin \
   --db-url=mysql://root:root@db/drupal > "$WORK/install.log" 2>&1 \
   && pass "Drupal installed" \
